@@ -6,6 +6,7 @@ services:
   - type: web
     name: telegram-ai-bot
     runtime: python
+    pythonVersion: 3.11 # <-- ДОДАНО: Явно вказуємо версію Python
     buildCommand: "pip install -r requirements.txt"
     startCommand: "bash start.sh"
     envVars:
