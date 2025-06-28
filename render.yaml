@@ -14,7 +14,7 @@ services:
           name: news-bot-db
           property: connectionString
       - key: PYTHON_VERSION
-        value: 3.11
+        value: 3.11 # <-- ЗМІНЕНО: Використовуємо стабільну версію Python
       - key: TELEGRAM_BOT_TOKEN
         sync: false # Секрет, вводиться вручну в панелі Render
       - key: GEMINI_API_KEY
@@ -33,4 +33,3 @@ services:
     databaseName: news_bot_db
     user: news_bot_user
     plan: free # Використовуємо безкоштовний план для старту
-
