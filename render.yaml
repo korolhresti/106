@@ -1,0 +1,36 @@
+# render.yaml - Інструкції для розгортання на Render.com
+# Цей файл описує веб-сервіс для бота та базу даних PostgreSQL.
+
+services:
+  # Веб-сервіс для нашого бота на FastAPI + Aiogram
+  - type: web
+    name: telegram-ai-bot
+    runtime: python
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "bash start.sh"
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: news-bot-db
+          property: connectionString
+      - key: PYTHON_VERSION
+        value: 3.11
+      - key: TELEGRAM_BOT_TOKEN
+        sync: false # Секрет, вводиться вручну в панелі Render
+      - key: GEMINI_API_KEY
+        sync: false # Секрет, вводиться вручну в панелі Render
+      - key: BOT_USERNAME
+        sync: false # Наприклад, YourNewsAIBot
+      - key: WEBHOOK_URL
+        fromService:
+          type: web
+          name: telegram-ai-bot
+          property: url
+
+  # База даних PostgreSQL
+  - type: psql
+    name: news-bot-db
+    databaseName: news_bot_db
+    user: news_bot_user
+    plan: free # Використовуємо безкоштовний план для старту
+
