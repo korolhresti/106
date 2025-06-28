@@ -1,0 +1,7 @@
+aiogram==3.4.1
+fastapi
+uvicorn
+python-dotenv
+asyncpg  # Замінено psycopg2-binary на асинхронний драйвер
+aiohttp
+croniter
