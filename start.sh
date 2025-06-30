@@ -10,4 +10,3 @@ psql $DATABASE_URL -f schema.sql -X
 echo "Запуск веб-сервера Uvicorn..."
 # Запускаємо веб-сервер на порту, який надає Render (зазвичай 10000)
 uvicorn bot:app --host 0.0.0.0 --port ${PORT:-10000}
-

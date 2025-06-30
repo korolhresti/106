@@ -1,0 +1,800 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bot Dashboard</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom styles for Inter font and general body styling */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6; /* Light gray background */
+            color: #333;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .card {
+            background-color: #fff;
+            border-radius: 12px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+        .table-container {
+            overflow-x: auto; /* Enable horizontal scrolling for tables on small screens */
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 16px;
+        }
+        th, td {
+            padding: 12px 16px;
+            text-align: left;
+            border-bottom: 1px solid #e5e7eb; /* Light gray border */
+        }
+        th {
+            background-color: #f9fafb; /* Slightly darker header background */
+            font-weight: 600;
+            color: #4b5563;
+            text-transform: uppercase;
+            font-size: 0.875rem; /* Small text for headers */
+        }
+        tr:hover {
+            background-color: #f3f4f6; /* Hover effect for table rows */
+        }
+        .btn {
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        .btn-primary {
+            background-color: #4f46e5; /* Indigo 600 */
+            color: #fff;
+        }
+        .btn-primary:hover {
+            background-color: #4338ca; /* Indigo 700 */
+        }
+        .btn-secondary {
+            background-color: #e5e7eb; /* Gray 200 */
+            color: #374151; /* Gray 700 */
+        }
+        .btn-secondary:hover {
+            background-color: #d1d5db; /* Gray 300 */
+        }
+        .badge {
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #fff;
+        }
+        .badge-success { background-color: #10b981; } /* Green 500 */
+        .badge-warning { background-color: #f59e0b; } /* Amber 500 */
+        .badge-danger { background-color: #ef4444; } /* Red 500 */
+        .badge-info { background-color: #3b82f6; } /* Blue 500 */
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+            .card {
+                padding: 16px;
+            }
+            th, td {
+                padding: 8px 12px;
+                font-size: 0.8rem;
+            }
+            .btn {
+                padding: 8px 16px;
+                font-size: 0.875rem;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800">
+    <div class="container">
+        <h1 class="text-4xl font-bold text-center text-indigo-700 mb-8 rounded-lg p-4 bg-white shadow-lg">
+            Панель керування ботом
+        </h1>
+
+        <!-- Overview Section -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div class="card text-center">
+                <h2 class="text-xl font-semibold text-gray-700 mb-2">Всього користувачів</h2>
+                <p id="totalUsers" class="text-4xl font-bold text-indigo-600">0</p>
+            </div>
+            <div class="card text-center">
+                <h2 class="text-xl font-semibold text-gray-700 mb-2">Активних новин</h2>
+                <p id="activeNews" class="text-4xl font-bold text-green-600">0</p>
+            </div>
+            <div class="card text-center">
+                <h2 class="text-xl font-semibold text-gray-700 mb-2">Товарів на продаж</h2>
+                <p id="productsForSale" class="text-4xl font-bold text-blue-600">0</p>
+            </div>
+            <div class="card text-center">
+                <h2 class="text-xl font-semibold text-gray-700 mb-2">Завершених угод</h2>
+                <p id="completedTransactions" class="text-4xl font-bold text-purple-600">0</p>
+            </div>
+        </div>
+
+        <!-- Users Section -->
+        <div class="card">
+            <h2 class="text-2xl font-semibold text-gray-700 mb-4">Користувачі</h2>
+            <div class="table-container">
+                <table id="usersTable">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Ім'я користувача</th>
+                            <th>Ім'я</th>
+                            <th>Адмін</th>
+                            <th>Остання активність</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- User data will be inserted here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- News Section -->
+        <div class="card">
+            <h2 class="text-2xl font-semibold text-gray-700 mb-4 flex justify-between items-center">
+                Новини
+                <button id="addNewsBtn" class="btn btn-primary">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clip-rule="evenodd" />
+                    </svg>
+                    Додати новину
+                </button>
+            </h2>
+            <div class="table-container">
+                <table id="newsTable">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Заголовок</th>
+                            <th>Статус</th>
+                            <th>Опубліковано</th>
+                            <th>Дії</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- News data will be inserted here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Products Section -->
+        <div class="card">
+            <h2 class="text-2xl font-semibold text-gray-700 mb-4 flex justify-between items-center">
+                Товари на продаж
+                <button id="addProductBtn" class="btn btn-primary">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clip-rule="evenodd" />
+                    </svg>
+                    Додати товар
+                </button>
+            </h2>
+            <div class="table-container">
+                <table id="productsTable">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Назва</th>
+                            <th>Ціна</th>
+                            <th>Продавець ID</th>
+                            <th>Статус</th>
+                            <th>Дії</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Product data will be inserted here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Transactions Section -->
+        <div class="card">
+            <h2 class="text-2xl font-semibold text-gray-700 mb-4">Транзакції</h2>
+            <div class="table-container">
+                <table id="transactionsTable">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Товар ID</th>
+                            <th>Продавець ID</th>
+                            <th>Покупець ID</th>
+                            <th>Статус</th>
+                            <th>Створено</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Transaction data will be inserted here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Reviews Section -->
+        <div class="card">
+            <h2 class="text-2xl font-semibold text-gray-700 mb-4">Відгуки</h2>
+            <div class="table-container">
+                <table id="reviewsTable">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Угода ID</th>
+                            <th>Оцінка</th>
+                            <th>Текст відгуку</th>
+                            <th>Автор відгуку ID</th>
+                            <th>Користувач, що отримав відгук ID</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Review data will be inserted here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Modals for Add/Edit (Simulated) -->
+        <div id="newsModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center hidden">
+            <div class="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
+                <h3 class="text-xl font-semibold mb-4" id="newsModalTitle">Додати новину</h3>
+                <form id="newsForm">
+                    <div class="mb-4">
+                        <label for="newsTitle" class="block text-gray-700 text-sm font-bold mb-2">Заголовок:</label>
+                        <input type="text" id="newsTitle" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" required>
+                    </div>
+                    <div class="mb-4">
+                        <label for="newsContent" class="block text-gray-700 text-sm font-bold mb-2">Зміст:</label>
+                        <textarea id="newsContent" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline h-32" required></textarea>
+                    </div>
+                    <div class="mb-4">
+                        <label for="newsUrl" class="block text-gray-700 text-sm font-bold mb-2">URL джерела:</label>
+                        <input type="url" id="newsUrl" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                    </div>
+                    <div class="mb-4">
+                        <label for="newsImageUrl" class="block text-gray-700 text-sm font-bold mb-2">URL зображення:</label>
+                        <input type="url" id="newsImageUrl" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                    </div>
+                    <div class="mb-4">
+                        <label for="newsLang" class="block text-gray-700 text-sm font-bold mb-2">Мова:</label>
+                        <select id="newsLang" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" required>
+                            <option value="uk">Українська</option>
+                            <option value="en">English</option>
+                        </select>
+                    </div>
+                    <div class="flex justify-end gap-4">
+                        <button type="button" id="cancelNewsBtn" class="btn btn-secondary">Скасувати</button>
+                        <button type="submit" class="btn btn-primary">Зберегти</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div id="productModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center hidden">
+            <div class="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
+                <h3 class="text-xl font-semibold mb-4" id="productModalTitle">Додати товар</h3>
+                <form id="productForm">
+                    <div class="mb-4">
+                        <label for="productName" class="block text-gray-700 text-sm font-bold mb-2">Назва товару:</label>
+                        <input type="text" id="productName" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" required>
+                    </div>
+                    <div class="mb-4">
+                        <label for="productDescription" class="block text-gray-700 text-sm font-bold mb-2">Опис:</label>
+                        <textarea id="productDescription" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline h-32" required></textarea>
+                    </div>
+                    <div class="mb-4">
+                        <label for="productPrice" class="block text-gray-700 text-sm font-bold mb-2">Ціна:</label>
+                        <input type="number" step="0.01" id="productPrice" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" required>
+                    </div>
+                    <div class="mb-4">
+                        <label for="productCurrency" class="block text-gray-700 text-sm font-bold mb-2">Валюта:</label>
+                        <input type="text" id="productCurrency" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" required>
+                    </div>
+                    <div class="mb-4">
+                        <label for="productImageUrl" class="block text-gray-700 text-sm font-bold mb-2">URL зображення:</label>
+                        <input type="url" id="productImageUrl" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                    </div>
+                    <div class="mb-4">
+                        <label for="productEPoint" class="block text-gray-700 text-sm font-bold mb-2">Місце зустрічі:</label>
+                        <input type="text" id="productEPoint" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" required>
+                    </div>
+                    <div class="flex justify-end gap-4">
+                        <button type="button" id="cancelProductBtn" class="btn btn-secondary">Скасувати</button>
+                        <button type="submit" class="btn btn-primary">Зберегти</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Confirmation/Alert Modal -->
+        <div id="alertModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center hidden">
+            <div class="bg-white p-8 rounded-lg shadow-lg w-full max-w-sm text-center">
+                <p id="alertMessage" class="text-lg font-semibold mb-6"></p>
+                <button type="button" id="closeAlertBtn" class="btn btn-primary">ОК</button>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // Simulated Database (in-memory for demonstration)
+        let simulatedDB = {
+            users: [
+                { id: 123456789, username: 'john_doe', first_name: 'Джон', is_admin: true, last_active: '2025-06-30T10:00:00Z' },
+                { id: 987654321, username: 'jane_smith', first_name: 'Джейн', is_admin: false, last_active: '2025-06-29T15:30:00Z' },
+                { id: 112233445, username: 'bot_user_1', first_name: 'Бот', is_admin: false, last_active: '2025-06-30T08:15:00Z' },
+                { id: 554433221, username: null, first_name: 'Анна', is_admin: false, last_active: '2025-06-28T20:00:00Z' },
+            ],
+            news: [
+                { id: 1, title: 'Нова технологія AI покращує діагностику', content: 'Деталі про прорив у медичній діагностиці за допомогою штучного інтелекту...', source_url: 'https://example.com/ai-news-1', image_url: 'https://placehold.co/600x400/007bff/ffffff?text=AI+News', published_at: '2025-06-28T10:00:00Z', lang: 'uk', status: 'approved' },
+                { id: 2, title: 'Економічний прогноз на наступний квартал', content: 'Аналіз економічних тенденцій та очікувань...', source_url: 'https://example.com/economy-news-2', image_url: 'https://placehold.co/600x400/28a745/ffffff?text=Economy+News', published_at: '2025-06-29T12:00:00Z', lang: 'uk', status: 'pending_review' },
+                { id: 3, title: 'Global Climate Summit Concludes with New Pledges', content: 'Summary of the recent climate discussions...', source_url: 'https://example.com/climate-news-3', image_url: 'https://placehold.co/600x400/ffc107/000000?text=Climate+News', published_at: '2025-06-30T09:00:00Z', lang: 'en', status: 'approved' },
+                { id: 4, title: 'Місцеві вибори: попередні результати', content: 'Перші дані та реакції на місцеві вибори...', source_url: 'https://example.com/election-news-4', image_url: 'https://placehold.co/600x400/dc3545/ffffff?text=Election+News', published_at: '2025-06-30T11:30:00Z', lang: 'uk', status: 'declined' },
+            ],
+            products: [
+                { id: 101, user_id: 987654321, product_name: 'Велосипед гірський', description: 'Майже новий гірський велосипед, ідеальний для бездоріжжя.', price: 500.00, currency: 'UAH', image_url: 'https://placehold.co/600x400/6f42c1/ffffff?text=Bike', e_point_location_text: 'Метро Театральна', status: 'approved' },
+                { id: 102, user_id: 123456789, product_name: 'Книга "Майстер і Маргарита"', description: 'Класика української літератури, гарний стан.', price: 150.00, currency: 'UAH', image_url: 'https://placehold.co/600x400/fd7e14/ffffff?text=Book', e_point_location_text: 'ТЦ Ocean Plaza', status: 'pending_review' },
+                { id: 103, user_id: 987654321, product_name: 'Ігрова консоль PlayStation 5', description: 'У відмінному стані, повний комплект.', price: 18000.00, currency: 'UAH', image_url: 'https://placehold.co/600x400/6610f2/ffffff?text=PS5', e_point_location_text: 'Позняки', status: 'sold' },
+            ],
+            transactions: [
+                { id: 1001, product_id: 103, seller_id: 987654321, buyer_id: 112233445, status: 'completed', created_at: '2025-06-25T10:00:00Z' },
+                { id: 1002, product_id: 101, seller_id: 987654321, buyer_id: 123456789, status: 'buyer_confirmed', created_at: '2025-06-29T14:00:00Z' },
+            ],
+            reviews: [
+                { id: 1, transaction_id: 1001, reviewer_id: 112233445, reviewed_user_id: 987654321, rating: 5, review_text: 'Чудовий продавець, швидка доставка!', created_at: '2025-06-26T11:00:00Z' },
+                { id: 2, transaction_id: 1001, reviewer_id: 987654321, reviewed_user_id: 112233445, rating: 4, review_text: 'Гарний покупець, рекомендую.', created_at: '2025-06-27T09:00:00Z' },
+            ]
+        };
+
+        let currentEditNewsId = null;
+        let currentEditProductId = null;
+
+        // Helper function to format date
+        function formatDate(dateString) {
+            const options = { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' };
+            return new Date(dateString).toLocaleDateString('uk-UA', options);
+        }
+
+        // Function to render Users table
+        function renderUsers() {
+            const tableBody = document.getElementById('usersTable').querySelector('tbody');
+            tableBody.innerHTML = ''; // Clear existing rows
+            simulatedDB.users.forEach(user => {
+                const row = tableBody.insertRow();
+                row.insertCell().textContent = user.id;
+                row.insertCell().textContent = user.username || 'N/A';
+                row.insertCell().textContent = user.first_name || 'N/A';
+                row.insertCell().textContent = user.is_admin ? 'Так' : 'Ні';
+                row.insertCell().textContent = formatDate(user.last_active);
+            });
+            document.getElementById('totalUsers').textContent = simulatedDB.users.length;
+        }
+
+        // Function to render News table
+        function renderNews() {
+            const tableBody = document.getElementById('newsTable').querySelector('tbody');
+            tableBody.innerHTML = '';
+            let activeNewsCount = 0;
+            simulatedDB.news.forEach(news => {
+                const row = tableBody.insertRow();
+                row.insertCell().textContent = news.id;
+                row.insertCell().textContent = news.title;
+                const statusCell = row.insertCell();
+                let statusBadgeClass = '';
+                switch (news.status) {
+                    case 'approved':
+                        statusBadgeClass = 'badge-success';
+                        activeNewsCount++;
+                        break;
+                    case 'pending_review':
+                        statusBadgeClass = 'badge-warning';
+                        break;
+                    case 'declined':
+                        statusBadgeClass = 'badge-danger';
+                        break;
+                    default:
+                        statusBadgeClass = 'badge-info';
+                }
+                statusCell.innerHTML = `<span class="badge ${statusBadgeClass}">${news.status.replace('_', ' ')}</span>`;
+                row.insertCell().textContent = formatDate(news.published_at);
+
+                const actionsCell = row.insertCell();
+                actionsCell.className = 'flex gap-2';
+                const editBtn = document.createElement('button');
+                editBtn.textContent = 'Редагувати';
+                editBtn.className = 'btn btn-secondary text-sm';
+                editBtn.onclick = () => openNewsModalForEdit(news.id);
+                actionsCell.appendChild(editBtn);
+
+                const deleteBtn = document.createElement('button');
+                deleteBtn.textContent = 'Видалити';
+                deleteBtn.className = 'btn btn-secondary text-sm';
+                deleteBtn.onclick = () => confirmDeleteNews(news.id);
+                actionsCell.appendChild(deleteBtn);
+
+                if (news.status !== 'approved') {
+                    const approveBtn = document.createElement('button');
+                    approveBtn.textContent = 'Схвалити';
+                    approveBtn.className = 'btn btn-secondary text-sm';
+                    approveBtn.onclick = () => approveNews(news.id);
+                    actionsCell.appendChild(approveBtn);
+                }
+            });
+            document.getElementById('activeNews').textContent = activeNewsCount;
+        }
+
+        // Function to render Products table
+        function renderProducts() {
+            const tableBody = document.getElementById('productsTable').querySelector('tbody');
+            tableBody.innerHTML = '';
+            let productsForSaleCount = 0;
+            simulatedDB.products.forEach(product => {
+                const row = tableBody.insertRow();
+                row.insertCell().textContent = product.id;
+                row.insertCell().textContent = product.product_name;
+                row.insertCell().textContent = `${product.price} ${product.currency}`;
+                row.insertCell().textContent = product.user_id;
+                const statusCell = row.insertCell();
+                let statusBadgeClass = '';
+                switch (product.status) {
+                    case 'approved':
+                        statusBadgeClass = 'badge-success';
+                        productsForSaleCount++;
+                        break;
+                    case 'pending_review':
+                        statusBadgeClass = 'badge-warning';
+                        break;
+                    case 'sold':
+                        statusBadgeClass = 'badge-info';
+                        break;
+                    case 'declined':
+                        statusBadgeClass = 'badge-danger';
+                        break;
+                    default:
+                        statusBadgeClass = 'badge-info';
+                }
+                statusCell.innerHTML = `<span class="badge ${statusBadgeClass}">${product.status.replace('_', ' ')}</span>`;
+
+                const actionsCell = row.insertCell();
+                actionsCell.className = 'flex gap-2';
+                const editBtn = document.createElement('button');
+                editBtn.textContent = 'Редагувати';
+                editBtn.className = 'btn btn-secondary text-sm';
+                editBtn.onclick = () => openProductModalForEdit(product.id);
+                actionsCell.appendChild(editBtn);
+
+                const deleteBtn = document.createElement('button');
+                deleteBtn.textContent = 'Видалити';
+                deleteBtn.className = 'btn btn-secondary text-sm';
+                deleteBtn.onclick = () => confirmDeleteProduct(product.id);
+                actionsCell.appendChild(deleteBtn);
+
+                if (product.status !== 'approved' && product.status !== 'sold') {
+                    const approveBtn = document.createElement('button');
+                    approveBtn.textContent = 'Схвалити';
+                    approveBtn.className = 'btn btn-secondary text-sm';
+                    approveBtn.onclick = () => approveProduct(product.id);
+                    actionsCell.appendChild(approveBtn);
+                }
+            });
+            document.getElementById('productsForSale').textContent = productsForSaleCount;
+        }
+
+        // Function to render Transactions table
+        function renderTransactions() {
+            const tableBody = document.getElementById('transactionsTable').querySelector('tbody');
+            tableBody.innerHTML = '';
+            let completedTransactionsCount = 0;
+            simulatedDB.transactions.forEach(transaction => {
+                const row = tableBody.insertRow();
+                row.insertCell().textContent = transaction.id;
+                row.insertCell().textContent = transaction.product_id;
+                row.insertCell().textContent = transaction.seller_id;
+                row.insertCell().textContent = transaction.buyer_id;
+                const statusCell = row.insertCell();
+                let statusBadgeClass = '';
+                switch (transaction.status) {
+                    case 'completed':
+                        statusBadgeClass = 'badge-success';
+                        completedTransactionsCount++;
+                        break;
+                    case 'cancelled':
+                        statusBadgeClass = 'badge-danger';
+                        break;
+                    default:
+                        statusBadgeClass = 'badge-warning';
+                }
+                statusCell.innerHTML = `<span class="badge ${statusBadgeClass}">${transaction.status.replace('_', ' ')}</span>`;
+                row.insertCell().textContent = formatDate(transaction.created_at);
+            });
+            document.getElementById('completedTransactions').textContent = completedTransactionsCount;
+        }
+
+        // Function to render Reviews table
+        function renderReviews() {
+            const tableBody = document.getElementById('reviewsTable').querySelector('tbody');
+            tableBody.innerHTML = '';
+            simulatedDB.reviews.forEach(review => {
+                const row = tableBody.insertRow();
+                row.insertCell().textContent = review.id;
+                row.insertCell().textContent = review.transaction_id;
+                row.insertCell().textContent = '⭐'.repeat(review.rating);
+                row.insertCell().textContent = review.review_text || 'Без тексту';
+                row.insertCell().textContent = review.reviewer_id;
+                row.insertCell().textContent = review.reviewed_user_id;
+            });
+        }
+
+        // --- News Modals and Actions ---
+        const newsModal = document.getElementById('newsModal');
+        const newsForm = document.getElementById('newsForm');
+        const newsModalTitle = document.getElementById('newsModalTitle');
+        const addNewsBtn = document.getElementById('addNewsBtn');
+        const cancelNewsBtn = document.getElementById('cancelNewsBtn');
+
+        addNewsBtn.addEventListener('click', () => {
+            newsModalTitle.textContent = 'Додати новину';
+            newsForm.reset();
+            currentEditNewsId = null;
+            newsModal.classList.remove('hidden');
+        });
+
+        cancelNewsBtn.addEventListener('click', () => {
+            newsModal.classList.add('hidden');
+        });
+
+        function openNewsModalForEdit(newsId) {
+            const news = simulatedDB.news.find(n => n.id === newsId);
+            if (news) {
+                newsModalTitle.textContent = `Редагувати новину #${newsId}`;
+                document.getElementById('newsTitle').value = news.title;
+                document.getElementById('newsContent').value = news.content;
+                document.getElementById('newsUrl').value = news.source_url || '';
+                document.getElementById('newsImageUrl').value = news.image_url || '';
+                document.getElementById('newsLang').value = news.lang;
+                currentEditNewsId = newsId;
+                newsModal.classList.remove('hidden');
+            } else {
+                showAlert('Новину не знайдено.');
+            }
+        }
+
+        newsForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const title = document.getElementById('newsTitle').value;
+            const content = document.getElementById('newsContent').value;
+            const source_url = document.getElementById('newsUrl').value;
+            const image_url = document.getElementById('newsImageUrl').value;
+            const lang = document.getElementById('newsLang').value;
+
+            if (currentEditNewsId) {
+                // Edit existing news
+                const newsIndex = simulatedDB.news.findIndex(n => n.id === currentEditNewsId);
+                if (newsIndex !== -1) {
+                    simulatedDB.news[newsIndex] = {
+                        ...simulatedDB.news[newsIndex],
+                        title,
+                        content,
+                        source_url,
+                        image_url,
+                        lang,
+                        status: 'pending_review' // Set to pending review after edit
+                    };
+                    showAlert(`Новину #${currentEditNewsId} оновлено та відправлено на перевірку.`);
+                }
+            } else {
+                // Add new news
+                const newId = Math.max(...simulatedDB.news.map(n => n.id)) + 1;
+                simulatedDB.news.push({
+                    id: newId,
+                    title,
+                    content,
+                    source_url,
+                    image_url,
+                    published_at: new Date().toISOString(),
+                    lang,
+                    status: 'pending_review'
+                });
+                showAlert(`Новину #${newId} додано та відправлено на перевірку.`);
+            }
+            newsModal.classList.add('hidden');
+            renderNews(); // Re-render table
+            // In a real app, you'd send this data to your backend
+        });
+
+        function confirmDeleteNews(newsId) {
+            showAlert(`Ви впевнені, що хочете видалити новину #${newsId}?`, () => deleteNews(newsId), true);
+        }
+
+        function deleteNews(newsId) {
+            simulatedDB.news = simulatedDB.news.filter(n => n.id !== newsId);
+            showAlert(`Новину #${newsId} видалено.`);
+            renderNews();
+            // In a real app, you'd send a delete request to your backend
+        }
+
+        function approveNews(newsId) {
+            const newsIndex = simulatedDB.news.findIndex(n => n.id === newsId);
+            if (newsIndex !== -1) {
+                simulatedDB.news[newsIndex].status = 'approved';
+                showAlert(`Новину #${newsId} схвалено.`);
+                renderNews();
+                // In a real app, you'd send an update request to your backend
+            }
+        }
+
+        // --- Product Modals and Actions ---
+        const productModal = document.getElementById('productModal');
+        const productForm = document.getElementById('productForm');
+        const productModalTitle = document.getElementById('productModalTitle');
+        const addProductBtn = document.getElementById('addProductBtn');
+        const cancelProductBtn = document.getElementById('cancelProductBtn');
+
+        addProductBtn.addEventListener('click', () => {
+            productModalTitle.textContent = 'Додати товар';
+            productForm.reset();
+            currentEditProductId = null;
+            productModal.classList.remove('hidden');
+        });
+
+        cancelProductBtn.addEventListener('click', () => {
+            productModal.classList.add('hidden');
+        });
+
+        function openProductModalForEdit(productId) {
+            const product = simulatedDB.products.find(p => p.id === productId);
+            if (product) {
+                productModalTitle.textContent = `Редагувати товар #${productId}`;
+                document.getElementById('productName').value = product.product_name;
+                document.getElementById('productDescription').value = product.description;
+                document.getElementById('productPrice').value = product.price;
+                document.getElementById('productCurrency').value = product.currency;
+                document.getElementById('productImageUrl').value = product.image_url || '';
+                document.getElementById('productEPoint').value = product.e_point_location_text;
+                currentEditProductId = productId;
+                productModal.classList.remove('hidden');
+            } else {
+                showAlert('Товар не знайдено.');
+            }
+        }
+
+        productForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const product_name = document.getElementById('productName').value;
+            const description = document.getElementById('productDescription').value;
+            const price = parseFloat(document.getElementById('productPrice').value);
+            const currency = document.getElementById('productCurrency').value;
+            const image_url = document.getElementById('productImageUrl').value;
+            const e_point_location_text = document.getElementById('productEPoint').value;
+
+            if (isNaN(price) || price <= 0) {
+                showAlert('Будь ласка, введіть коректну ціну.');
+                return;
+            }
+
+            if (currentEditProductId) {
+                // Edit existing product
+                const productIndex = simulatedDB.products.findIndex(p => p.id === currentEditProductId);
+                if (productIndex !== -1) {
+                    simulatedDB.products[productIndex] = {
+                        ...simulatedDB.products[productIndex],
+                        product_name,
+                        description,
+                        price,
+                        currency,
+                        image_url,
+                        e_point_location_text,
+                        status: 'pending_review' // Set to pending review after edit
+                    };
+                    showAlert(`Товар #${currentEditProductId} оновлено та відправлено на перевірку.`);
+                }
+            } else {
+                // Add new product
+                const newId = Math.max(...simulatedDB.products.map(p => p.id)) + 1;
+                // Assign a random existing user as seller for simulation
+                const randomUser = simulatedDB.users[Math.floor(Math.random() * simulatedDB.users.length)];
+                simulatedDB.products.push({
+                    id: newId,
+                    user_id: randomUser.id, // Assign a random user as seller
+                    product_name,
+                    description,
+                    price,
+                    currency,
+                    image_url,
+                    e_point_location_text,
+                    status: 'pending_review'
+                });
+                showAlert(`Товар #${newId} додано та відправлено на перевірку.`);
+            }
+            productModal.classList.add('hidden');
+            renderProducts(); // Re-render table
+            // In a real app, you'd send this data to your backend
+        });
+
+        function confirmDeleteProduct(productId) {
+            showAlert(`Ви впевнені, що хочете видалити товар #${productId}?`, () => deleteProduct(productId), true);
+        }
+
+        function deleteProduct(productId) {
+            simulatedDB.products = simulatedDB.products.filter(p => p.id !== productId);
+            showAlert(`Товар #${productId} видалено.`);
+            renderProducts();
+            // In a real app, you'd send a delete request to your backend
+        }
+
+        function approveProduct(productId) {
+            const productIndex = simulatedDB.products.findIndex(p => p.id === productId);
+            if (productIndex !== -1) {
+                simulatedDB.products[productIndex].status = 'approved';
+                showAlert(`Товар #${productId} схвалено.`);
+                renderProducts();
+                // In a real app, you'd send an update request to your backend
+            }
+        }
+
+        // --- Alert Modal ---
+        const alertModal = document.getElementById('alertModal');
+        const alertMessage = document.getElementById('alertMessage');
+        const closeAlertBtn = document.getElementById('closeAlertBtn');
+
+        // Function to show a custom alert/confirmation
+        function showAlert(message, onConfirm = null, isConfirm = false) {
+            alertMessage.textContent = message;
+            closeAlertBtn.textContent = isConfirm ? 'Підтвердити' : 'ОК';
+
+            // Clear previous event listeners to prevent multiple calls
+            const newCloseAlertBtn = closeAlertBtn.cloneNode(true);
+            closeAlertBtn.parentNode.replaceChild(newCloseAlertBtn, closeAlertBtn);
+            
+            newCloseAlertBtn.addEventListener('click', () => {
+                alertModal.classList.add('hidden');
+                if (onConfirm && isConfirm) {
+                    onConfirm();
+                }
+            });
+
+            if (isConfirm) {
+                const cancelConfirmBtn = document.createElement('button');
+                cancelConfirmBtn.textContent = 'Скасувати';
+                cancelConfirmBtn.className = 'btn btn-secondary ml-4';
+                cancelConfirmBtn.addEventListener('click', () => {
+                    alertModal.classList.add('hidden');
+                });
+                newCloseAlertBtn.parentNode.insertBefore(cancelConfirmBtn, newCloseAlertBtn);
+            }
+            alertModal.classList.remove('hidden');
+        }
+
+
+        // Initial rendering on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            renderUsers();
+            renderNews();
+            renderProducts();
+            renderTransactions();
+            renderReviews();
+        });
+    </script>
+</body>
+</html>

@@ -22,6 +22,7 @@ ALTER TABLE users ADD COLUMN IF NOT EXISTS inviter_id INT REFERENCES users(id);
 ALTER TABLE users ADD COLUMN IF NOT EXISTS email TEXT UNIQUE;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS auto_notifications BOOLEAN DEFAULT FALSE;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS view_mode TEXT DEFAULT 'manual';
+ALTER TABLE users ADD COLUMN IF NOT EXISTS telegram_id BIGINT; -- Додаємо telegram_id для users.html
 
 -- Додавання/оновлення таблиці news, якщо її немає
 CREATE TABLE IF NOT EXISTS news (
@@ -60,6 +61,44 @@ ALTER TABLE news ADD COLUMN IF NOT EXISTS citation_score INT DEFAULT 0;
 ALTER TABLE news ADD COLUMN IF NOT EXISTS is_duplicate BOOLEAN DEFAULT FALSE;
 ALTER TABLE news ADD COLUMN IF NOT EXISTS is_fake BOOLEAN DEFAULT FALSE;
 ALTER TABLE news ADD COLUMN IF NOT EXISTS moderation_status TEXT DEFAULT 'pending';
+ALTER TABLE news ADD COLUMN IF NOT EXISTS source_url TEXT; -- Додаємо source_url
+
+-- Додавання/оновлення таблиці products_for_sale (якщо її немає)
+CREATE TABLE IF NOT EXISTS products_for_sale (
+    id SERIAL PRIMARY KEY,
+    user_id BIGINT NOT NULL REFERENCES users(id),
+    product_name VARCHAR(255) NOT NULL,
+    description TEXT NOT NULL,
+    price NUMERIC(10, 2) NOT NULL,
+    currency VARCHAR(10) NOT NULL,
+    image_url TEXT,
+    e_point_location_text TEXT NOT NULL,
+    status VARCHAR(50) DEFAULT 'pending_review', -- pending_review, approved, sold, declined, archived
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Додавання/оновлення таблиці transactions (якщо її немає)
+CREATE TABLE IF NOT EXISTS transactions (
+    id SERIAL PRIMARY KEY,
+    product_id INTEGER NOT NULL REFERENCES products_for_sale(id),
+    seller_id BIGINT NOT NULL REFERENCES users(id),
+    buyer_id BIGINT NOT NULL REFERENCES users(id),
+    status VARCHAR(50) DEFAULT 'initiated', -- initiated, buyer_confirmed, seller_confirmed, completed, cancelled
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Додавання/оновлення таблиці reviews (якщо її немає)
+CREATE TABLE IF NOT EXISTS reviews (
+    id SERIAL PRIMARY KEY,
+    transaction_id INTEGER REFERENCES transactions(id),
+    reviewer_id BIGINT NOT NULL REFERENCES users(id),
+    reviewed_user_id BIGINT NOT NULL REFERENCES users(id),
+    rating INTEGER CHECK (rating >= 1 AND rating <= 5) NOT NULL,
+    review_text TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
 
 -- Додавання/оновлення таблиці sources
 CREATE TABLE IF NOT EXISTS sources (
@@ -96,7 +135,7 @@ CREATE TABLE IF NOT EXISTS reports (
     user_id INT REFERENCES users(id),
     news_id INT REFERENCES news(id),
     reason TEXT,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP DEFAULT CURRENT_AT
 );
 
 -- Додавання/оновлення таблиці feedback
@@ -315,7 +354,7 @@ CREATE TABLE IF NOT EXISTS source_stats (
 
 -- Створення або перестворення індексів. IF NOT EXISTS тут особливо корисний.
 CREATE INDEX IF NOT EXISTS idx_news_published_expires_moderation ON news (published_at DESC, expires_at, moderation_status);
-CREATE INDEX IF NOT EXISTS idx_filters_user_id ON filters (user_id);
+-- CREATE INDEX IF NOT EXISTS idx_filters_user_id ON filters (user_id); -- filters table not defined
 CREATE INDEX IF NOT EXISTS idx_blocks_user_type_value ON blocks (user_id, block_type, value);
 CREATE INDEX IF NOT EXISTS idx_bookmarks_user_id ON bookmarks (user_id);
 CREATE INDEX IF NOT EXISTS idx_user_stats_user_id ON user_stats (user_id);

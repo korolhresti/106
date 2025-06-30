@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Звіти Бота</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom styles for Inter font and general body styling */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6; /* Light gray background */
+            color: #333;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .card {
+            background-color: #fff;
+            border-radius: 12px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+        .table-container {
+            overflow-x: auto; /* Enable horizontal scrolling for tables on small screens */
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 16px;
+        }
+        th, td {
+            padding: 12px 16px;
+            text-align: left;
+            border-bottom: 1px solid #e5e7eb; /* Light gray border */
+        }
+        th {
+            background-color: #f9fafb; /* Slightly darker header background */
+            font-weight: 600;
+            color: #4b5563;
+            text-transform: uppercase;
+            font-size: 0.875rem; /* Small text for headers */
+        }
+        tr:nth-child(even) {
+            background-color: #fcfcfc; /* Zebra striping for rows */
+        }
+        .badge {
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #fff;
+        }
+        .badge-success { background-color: #10b981; } /* Green 500 */
+        .badge-warning { background-color: #f59e0b; } /* Amber 500 */
+        .badge-danger { background-color: #ef4444; } /* Red 500 */
+        .badge-info { background-color: #3b82f6; } /* Blue 500 */
+        .badge-neutral { background-color: #6b7280; } /* Gray 500 */
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+            .card {
+                padding: 16px;
+            }
+            th, td {
+                padding: 8px 12px;
+                font-size: 0.8rem;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800">
+    <div class="container">
+        <h1 class="text-4xl font-bold text-center text-indigo-700 mb-8 rounded-lg p-4 bg-white shadow-lg">
+            Звіти по Діяльності Бота
+        </h1>
+
+        <!-- General Statistics -->
+        <div class="card">
+            <h2 class="text-2xl font-semibold text-gray-700 mb-4">Загальна Статистика</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 text-center">
+                <div class="p-4 bg-indigo-50 rounded-lg shadow-sm">
+                    <p class="text-sm text-indigo-600 font-medium">Всього Користувачів</p>
+                    <p id="statTotalUsers" class="text-3xl font-bold text-indigo-800 mt-1">0</p>
+                </div>
+                <div class="p-4 bg-green-50 rounded-lg shadow-sm">
+                    <p class="text-sm text-green-600 font-medium">Всього Новин</p>
+                    <p id="statTotalNews" class="text-3xl font-bold text-green-800 mt-1">0</p>
+                </div>
+                <div class="p-4 bg-blue-50 rounded-lg shadow-sm">
+                    <p class="text-sm text-blue-600 font-medium">Всього Товарів</p>
+                    <p id="statTotalProducts" class="text-3xl font-bold text-blue-800 mt-1">0</p>
+                </div>
+                <div class="p-4 bg-purple-50 rounded-lg shadow-sm">
+                    <p class="text-sm text-purple-600 font-medium">Всього Транзакцій</p>
+                    <p id="statTotalTransactions" class="text-3xl font-bold text-purple-800 mt-1">0</p>
+                </div>
+                <div class="p-4 bg-red-50 rounded-lg shadow-sm">
+                    <p class="text-sm text-red-600 font-medium">Всього Відгуків</p>
+                    <p id="statTotalReviews" class="text-3xl font-bold text-red-800 mt-1">0</p>
+                </div>
+                <div class="p-4 bg-yellow-50 rounded-lg shadow-sm">
+                    <p class="text-sm text-yellow-600 font-medium">Активних Користувачів (7 днів)</p>
+                    <p id="statActiveUsersCount" class="text-3xl font-bold text-yellow-800 mt-1">0</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- News Status Counts -->
+        <div class="card">
+            <h2 class="text-2xl font-semibold text-gray-700 mb-4">Статус Новин</h2>
+            <div id="newsStatusChart" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 text-center">
+                <!-- News status counts will be rendered here -->
+            </div>
+        </div>
+
+        <!-- Product Status Counts -->
+        <div class="card">
+            <h2 class="text-2xl font-semibold text-gray-700 mb-4">Статус Товарів</h2>
+            <div id="productStatusChart" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 text-center">
+                <!-- Product status counts will be rendered here -->
+            </div>
+        </div>
+
+        <!-- Active Users Table -->
+        <div class="card">
+            <h2 class="text-2xl font-semibold text-gray-700 mb-4">Активні Користувачі (Останні 7 днів)</h2>
+            <div class="table-container">
+                <table id="activeUsersTable">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Ім'я користувача</th>
+                            <th>Ім'я</th>
+                            <th>Остання активність</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Active user data will be inserted here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Top Sellers Table -->
+        <div class="card">
+            <h2 class="text-2xl font-semibold text-gray-700 mb-4">Топ-5 Продавців (за проданими товарами)</h2>
+            <div class="table-container">
+                <table id="topSellersTable">
+                    <thead>
+                        <tr>
+                            <th>Місце</th>
+                            <th>ID</th>
+                            <th>Ім'я користувача</th>
+                            <th>Продано товарів</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Top sellers data will be inserted here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Top Buyers Table -->
+        <div class="card">
+            <h2 class="text-2xl font-semibold text-gray-700 mb-4">Топ-5 Покупців (за завершеними угодами)</h2>
+            <div class="table-container">
+                <table id="topBuyersTable">
+                    <thead>
+                        <tr>
+                            <th>Місце</th>
+                            <th>ID</th>
+                            <th>Ім'я користувача</th>
+                            <th>Завершених угод</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Top buyers data will be inserted here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // Simulated Report Data (replace with actual API calls in a real application)
+        const simulatedReportsData = {
+            general_stats: {
+                total_users: 150,
+                total_news: 320,
+                total_products: 85,
+                total_transactions: 120,
+                total_reviews: 75
+            },
+            active_users_last_7_days: [
+                { id: 123456789, username: 'john_doe', first_name: 'Джон', last_active: '2025-06-30T10:00:00Z' },
+                { id: 987654321, username: 'jane_smith', first_name: 'Джейн', last_active: '2025-06-29T15:30:00Z' },
+                { id: 112233445, username: 'bot_user_1', first_name: 'Бот', last_active: '2025-06-30T08:15:00Z' },
+                { id: 554433221, username: null, first_name: 'Анна', last_active: '2025-06-28T20:00:00Z' },
+                { id: 123123123, username: 'user_active_5', first_name: 'Петро', last_active: '2025-06-27T11:00:00Z' },
+                { id: 321321321, username: 'user_active_6', first_name: 'Олена', last_active: '2025-06-26T18:00:00Z' },
+            ],
+            active_users_count: 6,
+            product_status_counts: {
+                'approved': 50,
+                'pending_review': 20,
+                'sold': 10,
+                'declined': 5
+            },
+            news_status_counts: {
+                'approved': 250,
+                'pending_review': 50,
+                'declined': 20
+            },
+            top_sellers: [
+                { id: 987654321, username: 'jane_smith', first_name: 'Джейн', sold_products_count: 15 },
+                { id: 123456789, username: 'john_doe', first_name: 'Джон', sold_products_count: 10 },
+                { id: 112233445, username: 'bot_user_1', first_name: 'Бот', sold_products_count: 7 },
+                { id: 554433221, username: null, first_name: 'Анна', sold_products_count: 5 },
+                { id: 123123123, username: 'user_active_5', first_name: 'Петро', sold_products_count: 3 },
+            ],
+            top_buyers: [
+                { id: 112233445, username: 'bot_user_1', first_name: 'Бот', completed_purchases_count: 8 },
+                { id: 123456789, username: 'john_doe', first_name: 'Джон', completed_purchases_count: 6 },
+                { id: 987654321, username: 'jane_smith', first_name: 'Джейн', completed_purchases_count: 4 },
+                { id: 321321321, username: 'user_active_6', first_name: 'Олена', completed_purchases_count: 3 },
+                { id: 554433221, username: null, first_name: 'Анна', completed_purchases_count: 2 },
+            ]
+        };
+
+        // Helper function to format date
+        function formatDate(dateString) {
+            const options = { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' };
+            return new Date(dateString).toLocaleDateString('uk-UA', options);
+        }
+
+        // Render General Stats
+        function renderGeneralStats(data) {
+            document.getElementById('statTotalUsers').textContent = data.total_users;
+            document.getElementById('statTotalNews').textContent = data.total_news;
+            document.getElementById('statTotalProducts').textContent = data.total_products;
+            document.getElementById('statTotalTransactions').textContent = data.total_transactions;
+            document.getElementById('statTotalReviews').textContent = data.total_reviews;
+            document.getElementById('statActiveUsersCount').textContent = simulatedReportsData.active_users_count;
+        }
+
+        // Render Status Charts (simplified as divs with badges)
+        function renderStatusChart(containerId, statusCounts) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = '';
+            const statusColors = {
+                'approved': 'bg-green-500',
+                'pending_review': 'bg-yellow-500',
+                'sold': 'bg-blue-500',
+                'declined': 'bg-red-500',
+                'completed': 'bg-green-500',
+                'initiated': 'bg-purple-500',
+                'buyer_confirmed': 'bg-indigo-500',
+                'seller_confirmed': 'bg-teal-500',
+                'cancelled': 'bg-gray-500'
+            };
+
+            for (const status in statusCounts) {
+                const count = statusCounts[status];
+                const div = document.createElement('div');
+                div.className = `p-4 rounded-lg shadow-sm ${statusColors[status] || 'bg-gray-400'} text-white`;
+                div.innerHTML = `
+                    <p class="text-sm font-medium">${status.replace('_', ' ').charAt(0).toUpperCase() + status.replace('_', ' ').slice(1)}</p>
+                    <p class="text-3xl font-bold mt-1">${count}</p>
+                `;
+                container.appendChild(div);
+            }
+        }
+
+        // Render Active Users Table
+        function renderActiveUsersTable(users) {
+            const tableBody = document.getElementById('activeUsersTable').querySelector('tbody');
+            tableBody.innerHTML = '';
+            users.forEach(user => {
+                const row = tableBody.insertRow();
+                row.insertCell().textContent = user.id;
+                row.insertCell().textContent = user.username || 'N/A';
+                row.insertCell().textContent = user.first_name || 'N/A';
+                row.insertCell().textContent = formatDate(user.last_active);
+            });
+        }
+
+        // Render Top Sellers Table
+        function renderTopSellersTable(sellers) {
+            const tableBody = document.getElementById('topSellersTable').querySelector('tbody');
+            tableBody.innerHTML = '';
+            sellers.forEach((seller, index) => {
+                const row = tableBody.insertRow();
+                row.insertCell().textContent = index + 1;
+                row.insertCell().textContent = seller.id;
+                row.insertCell().textContent = seller.username || seller.first_name || 'N/A';
+                row.insertCell().textContent = seller.sold_products_count;
+            });
+        }
+
+        // Render Top Buyers Table
+        function renderTopBuyersTable(buyers) {
+            const tableBody = document.getElementById('topBuyersTable').querySelector('tbody');
+            tableBody.innerHTML = '';
+            buyers.forEach((buyer, index) => {
+                const row = tableBody.insertRow();
+                row.insertCell().textContent = index + 1;
+                row.insertCell().textContent = buyer.id;
+                row.insertCell().textContent = buyer.username || buyer.first_name || 'N/A';
+                row.insertCell().textContent = buyer.completed_purchases_count;
+            });
+        }
+
+        // Initialize reports on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            renderGeneralStats(simulatedReportsData.general_stats);
+            renderStatusChart('newsStatusChart', simulatedReportsData.news_status_counts);
+            renderStatusChart('productStatusChart', simulatedReportsData.product_status_counts);
+            renderActiveUsersTable(simulatedReportsData.active_users_last_7_days);
+            renderTopSellersTable(simulatedReportsData.top_sellers);
+            renderTopBuyersTable(simulatedReportsData.top_buyers);
+        });
+    </script>
+</body>
+</html>

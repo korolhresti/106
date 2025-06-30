@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Панель адміністратора - Користувачі</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6; /* Light gray background */
+        }
+        .container {
+            max-width: 96%; /* Fluid width for responsiveness */
+            margin: 2rem auto;
+            padding: 1.5rem;
+            background-color: #ffffff;
+            border-radius: 0.75rem; /* Rounded corners */
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid #e5e7eb; /* Light gray border */
+        }
+        th {
+            background-color: #e0f2f7; /* Light blue header background */
+            font-weight: 600;
+            color: #1f2937; /* Darker text */
+            border-radius: 0.5rem 0.5rem 0 0; /* Rounded corners for top of header */
+        }
+        tr:last-child td {
+            border-bottom: none;
+        }
+        .btn {
+            padding: 0.6rem 1.2rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            transition: all 0.2s ease-in-out;
+            cursor: pointer;
+        }
+        .btn-primary {
+            background-color: #3b82f6; /* Blue */
+            color: white;
+        }
+        .btn-primary:hover {
+            background-color: #2563eb; /* Darker blue on hover */
+        }
+        .input-field {
+            padding: 0.6rem 1rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.5rem;
+            width: 100%;
+        }
+        .error-message {
+            color: #ef4444; /* Red color for errors */
+            margin-top: 0.5rem;
+        }
+        .pagination-btn {
+            background-color: #60a5fa;
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            margin: 0 0.25rem;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+        .pagination-btn:hover:not(:disabled) {
+            background-color: #3b82f6;
+        }
+        .pagination-btn:disabled {
+            background-color: #9ca3af;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body class="p-4">
+    <div class="container">
+        <h1 class="text-3xl font-bold text-gray-800 mb-6 text-center">Панель адміністратора - Користувачі</h1>
+
+        <div class="mb-6 bg-blue-50 p-4 rounded-lg shadow-inner">
+            <p class="text-sm text-blue-800 mb-2">Для доступу до даних, будь ласка, введіть ваш <b>ADMIN_API_KEY</b>. Цей ключ має бути встановлений у змінних середовища вашого бота.</p>
+            <div class="flex flex-col sm:flex-row items-stretch sm:items-center space-y-3 sm:space-y-0 sm:space-x-3">
+                <input type="password" id="apiKeyInput" placeholder="Введіть ADMIN_API_KEY" class="input-field flex-grow">
+                <button id="fetchUsersBtn" class="btn btn-primary w-full sm:w-auto">Завантажити користувачів</button>
+            </div>
+            <p id="errorMessage" class="error-message hidden"></p>
+        </div>
+
+        <div id="loadingMessage" class="text-center text-gray-600 mb-4 hidden">
+            Завантаження даних...
+        </div>
+
+        <div id="usersTableContainer" class="overflow-x-auto">
+            <table id="usersTable" class="min-w-full divide-y divide-gray-200 rounded-lg overflow-hidden">
+                <thead class="bg-blue-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Telegram ID</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Username</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ім'я</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Зареєстрований</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Остання активність</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Преміум</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Рівень</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                    </tr>
+                </thead>
+                <tbody id="usersTableBody" class="bg-white divide-y divide-gray-200">
+                    <!-- Data will be loaded here -->
+                    <tr><td colspan="9" class="text-center py-4 text-gray-500">Натисніть "Завантажити користувачів", щоб відобразити дані.</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="flex justify-center items-center mt-6 space-x-2">
+            <button id="prevPageBtn" class="pagination-btn" disabled>Попередня</button>
+            <span id="pageInfo" class="text-gray-700">Сторінка 1</span>
+            <button id="nextPageBtn" class="pagination-btn" disabled>Наступна</button>
+        </div>
+    </div>
+
+    <script>
+        // Dynamically determine the base URL for API requests.
+        // This assumes your bot's FastAPI server is running on the same origin as this HTML file.
+        const API_BASE_URL = window.location.origin; 
+        const API_KEY_INPUT = document.getElementById('apiKeyInput');
+        const FETCH_USERS_BTN = document.getElementById('fetchUsersBtn');
+        const USERS_TABLE_BODY = document.getElementById('usersTableBody');
+        const ERROR_MESSAGE = document.getElementById('errorMessage');
+        const LOADING_MESSAGE = document.getElementById('loadingMessage');
+        const PREV_PAGE_BTN = document.getElementById('prevPageBtn');
+        const NEXT_PAGE_BTN = document.getElementById('nextPageBtn');
+        const PAGE_INFO = document.getElementById('pageInfo');
+
+        let currentPage = 0;
+        const usersPerPage = 20; // Number of users to display per page
+
+        // Event listeners for pagination buttons
+        FETCH_USERS_BTN.addEventListener('click', () => fetchUsers(0)); // Always start from the first page
+        PREV_PAGE_BTN.addEventListener('click', () => fetchUsers(currentPage - 1));
+        NEXT_PAGE_BTN.addEventListener('click', () => fetchUsers(currentPage + 1));
+
+        /**
+         * Fetches user data from the API based on the current page and API key.
+         * @param {number} page The page number to fetch (0-indexed).
+         */
+        async function fetchUsers(page) {
+            const apiKey = API_KEY_INPUT.value;
+            if (!apiKey) {
+                ERROR_MESSAGE.textContent = "Будь ласка, введіть ADMIN_API_KEY.";
+                ERROR_MESSAGE.classList.remove('hidden');
+                return;
+            } else {
+                ERROR_MESSAGE.classList.add('hidden');
+            }
+
+            LOADING_MESSAGE.classList.remove('hidden');
+            USERS_TABLE_BODY.innerHTML = ''; // Clear the table before loading new data
+
+            try {
+                // Construct the API URL with limit and offset for pagination
+                const response = await fetch(`${API_BASE_URL}/admin/users?limit=${usersPerPage}&offset=${page * usersPerPage}`, {
+                    headers: {
+                        'X-API-Key': apiKey // Send the API key in the custom header
+                    }
+                });
+
+                if (!response.ok) {
+                    // If the response is not OK (e.g., 401 Unauthorized, 403 Forbidden, 500 Internal Server Error)
+                    const errorData = await response.json();
+                    throw new Error(errorData.detail || `Помилка: ${response.status}`);
+                }
+
+                const data = await response.json();
+                displayUsers(data.users); // Display the fetched users
+                currentPage = page; // Update current page
+                updatePaginationButtons(data.users.length); // Update pagination button states
+
+            } catch (error) {
+                console.error("Помилка завантаження користувачів:", error);
+                ERROR_MESSAGE.textContent = `Помилка: ${error.message}`;
+                ERROR_MESSAGE.classList.remove('hidden');
+                USERS_TABLE_BODY.innerHTML = '<tr><td colspan="9" class="text-center py-4 text-red-500">Не вдалося завантажити дані користувачів. Перевірте API ключ та підключення.</td></tr>';
+                updatePaginationButtons(0); // Disable pagination on error
+            } finally {
+                LOADING_MESSAGE.classList.add('hidden'); // Hide loading message
+            }
+        }
+
+        /**
+         * Displays the fetched user data in the table.
+         * @param {Array<Object>} users An array of user objects to display.
+         */
+        function displayUsers(users) {
+            if (users.length === 0 && currentPage === 0) {
+                // No users found on the first page
+                USERS_TABLE_BODY.innerHTML = '<tr><td colspan="9" class="text-center py-4 text-gray-500">Користувачів не знайдено.</td></tr>';
+                return;
+            }
+            if (users.length === 0 && currentPage > 0) {
+                 // No users found on subsequent pages, might mean we went too far or data changed
+                USERS_TABLE_BODY.innerHTML = '<tr><td colspan="9" class="text-center py-4 text-gray-500">Більше користувачів не знайдено на цій сторінці.</td></tr>';
+                return;
+            }
+
+            users.forEach(user => {
+                const row = document.createElement('tr');
+                row.className = 'hover:bg-gray-50'; // Add hover effect for rows
+                row.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${user.id}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">${user.telegram_id || 'N/A'}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">${user.username || 'N/A'}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">${user.first_name || 'N/A'}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">${new Date(user.created_at).toLocaleString('uk-UA')}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">${new Date(user.last_active).toLocaleString('uk-UA')}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">${user.is_premium ? '✅ Так' : '❌ Ні'}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">${user.level || '1'}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">${user.email || 'N/A'}</td>
+                `;
+                USERS_TABLE_BODY.appendChild(row);
+            });
+        }
+
+        /**
+         * Updates the state of pagination buttons (enabled/disabled) and page info.
+         * @param {number} currentUsersCount The number of users returned for the current page.
+         */
+        function updatePaginationButtons(currentUsersCount) {
+            PREV_PAGE_BTN.disabled = currentPage === 0; // Disable 'Previous' if on the first page
+            // Disable 'Next' if the number of users returned is less than the per-page limit,
+            // indicating this is the last page (or there are no users at all).
+            NEXT_PAGE_BTN.disabled = currentUsersCount < usersPerPage; 
+            PAGE_INFO.textContent = `Сторінка ${currentPage + 1}`; // Update page number display
+        }
+    </script>
+</body>
+</html>
