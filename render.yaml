@@ -6,7 +6,7 @@ services:
   - type: web
     name: telegram-ai-bot
     runtime: python
-    pythonVersion: 3.12.4 # <-- ЗМІНЕНО: Використовуємо Python 3.12.4
+    pythonVersion: 3.12.4 # Використовуємо Python 3.12.4
     buildCommand: "pip install -r requirements.txt"
     startCommand: "bash start.sh"
     envVars:
@@ -15,7 +15,7 @@ services:
           name: news-bot-db
           property: connectionString
       - key: PYTHON_VERSION
-        value: 3.12 # <-- ЗМІНЕНО: Використовуємо Python 3.12
+        value: 3.12 # Використовуємо Python 3.12
       - key: TELEGRAM_BOT_TOKEN
         sync: false # Секрет, вводиться вручну в панелі Render
       - key: GEMINI_API_KEY
@@ -27,6 +27,8 @@ services:
           type: web
           name: telegram-ai-bot
           property: url
+      - key: ADMIN_API_KEY # Додаємо ADMIN_API_KEY для доступу до адмін-панелей
+        sync: false # Секрет, вводиться вручну в панелі Render
 
   # База даних PostgreSQL
   - type: psql

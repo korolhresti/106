@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bot Dashboard</title>
+    <title>Панель керування ботом</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -111,6 +111,19 @@
             Панель керування ботом
         </h1>
 
+        <div class="mb-6 bg-blue-50 p-4 rounded-lg shadow-inner">
+            <p class="text-sm text-blue-800 mb-2">Для доступу до даних, будь ласка, введіть ваш <b>ADMIN_API_KEY</b>. Цей ключ має бути встановлений у змінних середовища вашого бота.</p>
+            <div class="flex flex-col sm:flex-row items-stretch sm:items-center space-y-3 sm:space-y-0 sm:space-x-3">
+                <input type="password" id="apiKeyInput" placeholder="Введіть ADMIN_API_KEY" class="input-field flex-grow">
+                <button id="loadDataBtn" class="btn btn-primary w-full sm:w-auto">Завантажити дані</button>
+            </div>
+            <p id="errorMessage" class="error-message hidden"></p>
+        </div>
+
+        <div id="loadingMessage" class="text-center text-gray-600 mb-4 hidden">
+            Завантаження даних...
+        </div>
+
         <!-- Overview Section -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
             <div class="card text-center">
@@ -147,6 +160,7 @@
                     </thead>
                     <tbody>
                         <!-- User data will be inserted here -->
+                        <tr><td colspan="5" class="text-center py-4 text-gray-500">Завантажте дані, використовуючи ключ доступу.</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -176,6 +190,7 @@
                     </thead>
                     <tbody>
                         <!-- News data will be inserted here -->
+                        <tr><td colspan="5" class="text-center py-4 text-gray-500">Завантажте дані, використовуючи ключ доступу.</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -206,6 +221,7 @@
                     </thead>
                     <tbody>
                         <!-- Product data will be inserted here -->
+                        <tr><td colspan="6" class="text-center py-4 text-gray-500">Завантажте дані, використовуючи ключ доступу.</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -228,6 +244,7 @@
                     </thead>
                     <tbody>
                         <!-- Transaction data will be inserted here -->
+                        <tr><td colspan="6" class="text-center py-4 text-gray-500">Завантажте дані, використовуючи ключ доступу.</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -250,12 +267,13 @@
                     </thead>
                     <tbody>
                         <!-- Review data will be inserted here -->
+                        <tr><td colspan="6" class="text-center py-4 text-gray-500">Завантажте дані, використовуючи ключ доступу.</td></tr>
                     </tbody>
                 </table>
             </div>
         </div>
 
-        <!-- Modals for Add/Edit (Simulated) -->
+        <!-- Modals for Add/Edit -->
         <div id="newsModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center hidden">
             <div class="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
                 <h3 class="text-xl font-semibold mb-4" id="newsModalTitle">Додати новину</h3>
@@ -338,66 +356,145 @@
     </div>
 
     <script>
-        // Simulated Database (in-memory for demonstration)
-        let simulatedDB = {
-            users: [
-                { id: 123456789, username: 'john_doe', first_name: 'Джон', is_admin: true, last_active: '2025-06-30T10:00:00Z' },
-                { id: 987654321, username: 'jane_smith', first_name: 'Джейн', is_admin: false, last_active: '2025-06-29T15:30:00Z' },
-                { id: 112233445, username: 'bot_user_1', first_name: 'Бот', is_admin: false, last_active: '2025-06-30T08:15:00Z' },
-                { id: 554433221, username: null, first_name: 'Анна', is_admin: false, last_active: '2025-06-28T20:00:00Z' },
-            ],
-            news: [
-                { id: 1, title: 'Нова технологія AI покращує діагностику', content: 'Деталі про прорив у медичній діагностиці за допомогою штучного інтелекту...', source_url: 'https://example.com/ai-news-1', image_url: 'https://placehold.co/600x400/007bff/ffffff?text=AI+News', published_at: '2025-06-28T10:00:00Z', lang: 'uk', status: 'approved' },
-                { id: 2, title: 'Економічний прогноз на наступний квартал', content: 'Аналіз економічних тенденцій та очікувань...', source_url: 'https://example.com/economy-news-2', image_url: 'https://placehold.co/600x400/28a745/ffffff?text=Economy+News', published_at: '2025-06-29T12:00:00Z', lang: 'uk', status: 'pending_review' },
-                { id: 3, title: 'Global Climate Summit Concludes with New Pledges', content: 'Summary of the recent climate discussions...', source_url: 'https://example.com/climate-news-3', image_url: 'https://placehold.co/600x400/ffc107/000000?text=Climate+News', published_at: '2025-06-30T09:00:00Z', lang: 'en', status: 'approved' },
-                { id: 4, title: 'Місцеві вибори: попередні результати', content: 'Перші дані та реакції на місцеві вибори...', source_url: 'https://example.com/election-news-4', image_url: 'https://placehold.co/600x400/dc3545/ffffff?text=Election+News', published_at: '2025-06-30T11:30:00Z', lang: 'uk', status: 'declined' },
-            ],
-            products: [
-                { id: 101, user_id: 987654321, product_name: 'Велосипед гірський', description: 'Майже новий гірський велосипед, ідеальний для бездоріжжя.', price: 500.00, currency: 'UAH', image_url: 'https://placehold.co/600x400/6f42c1/ffffff?text=Bike', e_point_location_text: 'Метро Театральна', status: 'approved' },
-                { id: 102, user_id: 123456789, product_name: 'Книга "Майстер і Маргарита"', description: 'Класика української літератури, гарний стан.', price: 150.00, currency: 'UAH', image_url: 'https://placehold.co/600x400/fd7e14/ffffff?text=Book', e_point_location_text: 'ТЦ Ocean Plaza', status: 'pending_review' },
-                { id: 103, user_id: 987654321, product_name: 'Ігрова консоль PlayStation 5', description: 'У відмінному стані, повний комплект.', price: 18000.00, currency: 'UAH', image_url: 'https://placehold.co/600x400/6610f2/ffffff?text=PS5', e_point_location_text: 'Позняки', status: 'sold' },
-            ],
-            transactions: [
-                { id: 1001, product_id: 103, seller_id: 987654321, buyer_id: 112233445, status: 'completed', created_at: '2025-06-25T10:00:00Z' },
-                { id: 1002, product_id: 101, seller_id: 987654321, buyer_id: 123456789, status: 'buyer_confirmed', created_at: '2025-06-29T14:00:00Z' },
-            ],
-            reviews: [
-                { id: 1, transaction_id: 1001, reviewer_id: 112233445, reviewed_user_id: 987654321, rating: 5, review_text: 'Чудовий продавець, швидка доставка!', created_at: '2025-06-26T11:00:00Z' },
-                { id: 2, transaction_id: 1001, reviewer_id: 987654321, reviewed_user_id: 112233445, rating: 4, review_text: 'Гарний покупець, рекомендую.', created_at: '2025-06-27T09:00:00Z' },
-            ]
-        };
+        // Dynamically determine the base URL for API requests.
+        const API_BASE_URL = window.location.origin;
+        const API_KEY_INPUT = document.getElementById('apiKeyInput');
+        const LOAD_DATA_BTN = document.getElementById('loadDataBtn');
+        const ERROR_MESSAGE = document.getElementById('errorMessage');
+        const LOADING_MESSAGE = document.getElementById('loadingMessage');
+
+        // Elements for overview stats
+        const totalUsersEl = document.getElementById('totalUsers');
+        const activeNewsEl = document.getElementById('activeNews');
+        const productsForSaleEl = document.getElementById('productsForSale');
+        const completedTransactionsEl = document.getElementById('completedTransactions');
+
+        // Table bodies
+        const usersTableBody = document.getElementById('usersTable').querySelector('tbody');
+        const newsTableBody = document.getElementById('newsTable').querySelector('tbody');
+        const productsTableBody = document.getElementById('productsTable').querySelector('tbody');
+        const transactionsTableBody = document.getElementById('transactionsTable').querySelector('tbody');
+        const reviewsTableBody = document.getElementById('reviewsTable').querySelector('tbody');
 
         let currentEditNewsId = null;
         let currentEditProductId = null;
 
+        LOAD_DATA_BTN.addEventListener('click', fetchAllData);
+
+        /**
+         * Fetches all data for the dashboard from the API.
+         */
+        async function fetchAllData() {
+            const apiKey = API_KEY_INPUT.value;
+            if (!apiKey) {
+                ERROR_MESSAGE.textContent = "Будь ласка, введіть ADMIN_API_KEY.";
+                ERROR_MESSAGE.classList.remove('hidden');
+                return;
+            } else {
+                ERROR_MESSAGE.classList.add('hidden');
+            }
+
+            LOADING_MESSAGE.classList.remove('hidden');
+            // Clear all tables
+            usersTableBody.innerHTML = '<tr><td colspan="5" class="text-center py-4 text-gray-500">Завантаження...</td></tr>';
+            newsTableBody.innerHTML = '<tr><td colspan="5" class="text-center py-4 text-gray-500">Завантаження...</td></tr>';
+            productsTableBody.innerHTML = '<tr><td colspan="6" class="text-center py-4 text-gray-500">Завантаження...</td></tr>';
+            transactionsTableBody.innerHTML = '<tr><td colspan="6" class="text-center py-4 text-gray-500">Завантаження...</td></tr>';
+            reviewsTableBody.innerHTML = '<tr><td colspan="6" class="text-center py-4 text-gray-500">Завантаження...</td></tr>';
+
+
+            try {
+                // Fetch overview stats
+                const statsResponse = await fetch(`${API_BASE_URL}/admin/stats`, { headers: { 'X-API-Key': apiKey } });
+                if (!statsResponse.ok) throw new Error(`Помилка завантаження статистики: ${statsResponse.status}`);
+                const statsData = await statsResponse.json();
+                totalUsersEl.textContent = statsData.total_users || 0;
+                activeNewsEl.textContent = statsData.active_news || 0;
+                productsForSaleEl.textContent = statsData.products_for_sale || 0;
+                completedTransactionsEl.textContent = statsData.completed_transactions || 0;
+
+                // Fetch users
+                const usersResponse = await fetch(`${API_BASE_URL}/admin/users?limit=100&offset=0`, { headers: { 'X-API-Key': apiKey } });
+                if (!usersResponse.ok) throw new Error(`Помилка завантаження користувачів: ${usersResponse.status}`);
+                const usersData = await usersResponse.json();
+                renderUsers(usersData.users);
+
+                // Fetch news
+                const newsResponse = await fetch(`${API_BASE_URL}/admin/news?limit=100&offset=0`, { headers: { 'X-API-Key': apiKey } });
+                if (!newsResponse.ok) throw new Error(`Помилка завантаження новин: ${newsResponse.status}`);
+                const newsData = await newsResponse.json();
+                renderNews(newsData.news);
+
+                // Fetch products
+                const productsResponse = await fetch(`${API_BASE_URL}/admin/products?limit=100&offset=0`, { headers: { 'X-API-Key': apiKey } });
+                if (!productsResponse.ok) throw new Error(`Помилка завантаження товарів: ${productsResponse.status}`);
+                const productsData = await productsResponse.json();
+                renderProducts(productsData.products);
+
+                // Fetch transactions
+                const transactionsResponse = await fetch(`${API_BASE_URL}/admin/transactions?limit=100&offset=0`, { headers: { 'X-API-Key': apiKey } });
+                if (!transactionsResponse.ok) throw new Error(`Помилка завантаження транзакцій: ${transactionsResponse.status}`);
+                const transactionsData = await transactionsResponse.json();
+                renderTransactions(transactionsData.transactions);
+
+                // Fetch reviews
+                const reviewsResponse = await fetch(`${API_BASE_URL}/admin/reviews?limit=100&offset=0`, { headers: { 'X-API-Key': apiKey } });
+                if (!reviewsResponse.ok) throw new Error(`Помилка завантаження відгуків: ${reviewsResponse.status}`);
+                const reviewsData = await reviewsResponse.json();
+                renderReviews(reviewsData.reviews);
+
+            } catch (error) {
+                console.error("Помилка завантаження даних дашборду:", error);
+                ERROR_MESSAGE.textContent = `Помилка: ${error.message}`;
+                ERROR_MESSAGE.classList.remove('hidden');
+                // Display empty/error state for tables
+                usersTableBody.innerHTML = '<tr><td colspan="5" class="text-center py-4 text-red-500">Не вдалося завантажити дані користувачів.</td></tr>';
+                newsTableBody.innerHTML = '<tr><td colspan="5" class="text-center py-4 text-red-500">Не вдалося завантажити дані новин.</td></tr>';
+                productsTableBody.innerHTML = '<tr><td colspan="6" class="text-center py-4 text-red-500">Не вдалося завантажити дані товарів.</td></tr>';
+                transactionsTableBody.innerHTML = '<tr><td colspan="6" class="text-center py-4 text-red-500">Не вдалося завантажити дані транзакцій.</td></tr>';
+                reviewsTableBody.innerHTML = '<tr><td colspan="6" class="text-center py-4 text-red-500">Не вдалося завантажити дані відгуків.</td></tr>';
+            } finally {
+                LOADING_MESSAGE.classList.add('hidden');
+            }
+        }
+
         // Helper function to format date
         function formatDate(dateString) {
-            const options = { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' };
-            return new Date(dateString).toLocaleDateString('uk-UA', options);
+            if (!dateString) return 'N/A';
+            try {
+                const options = { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' };
+                return new Date(dateString).toLocaleDateString('uk-UA', options);
+            } catch (e) {
+                return 'Некоректна дата';
+            }
         }
 
         // Function to render Users table
-        function renderUsers() {
-            const tableBody = document.getElementById('usersTable').querySelector('tbody');
-            tableBody.innerHTML = ''; // Clear existing rows
-            simulatedDB.users.forEach(user => {
-                const row = tableBody.insertRow();
+        function renderUsers(users) {
+            usersTableBody.innerHTML = ''; // Clear existing rows
+            if (users.length === 0) {
+                usersTableBody.innerHTML = '<tr><td colspan="5" class="text-center py-4 text-gray-500">Користувачів не знайдено.</td></tr>';
+                return;
+            }
+            users.forEach(user => {
+                const row = usersTableBody.insertRow();
                 row.insertCell().textContent = user.id;
                 row.insertCell().textContent = user.username || 'N/A';
                 row.insertCell().textContent = user.first_name || 'N/A';
                 row.insertCell().textContent = user.is_admin ? 'Так' : 'Ні';
                 row.insertCell().textContent = formatDate(user.last_active);
             });
-            document.getElementById('totalUsers').textContent = simulatedDB.users.length;
         }
 
         // Function to render News table
-        function renderNews() {
-            const tableBody = document.getElementById('newsTable').querySelector('tbody');
-            tableBody.innerHTML = '';
-            let activeNewsCount = 0;
-            simulatedDB.news.forEach(news => {
-                const row = tableBody.insertRow();
+        function renderNews(newsItems) {
+            newsTableBody.innerHTML = '';
+            if (newsItems.length === 0) {
+                newsTableBody.innerHTML = '<tr><td colspan="5" class="text-center py-4 text-gray-500">Новин не знайдено.</td></tr>';
+                return;
+            }
+            newsItems.forEach(news => {
+                const row = newsTableBody.insertRow();
                 row.insertCell().textContent = news.id;
                 row.insertCell().textContent = news.title;
                 const statusCell = row.insertCell();
@@ -405,7 +502,6 @@
                 switch (news.status) {
                     case 'approved':
                         statusBadgeClass = 'badge-success';
-                        activeNewsCount++;
                         break;
                     case 'pending_review':
                         statusBadgeClass = 'badge-warning';
@@ -441,16 +537,17 @@
                     actionsCell.appendChild(approveBtn);
                 }
             });
-            document.getElementById('activeNews').textContent = activeNewsCount;
         }
 
         // Function to render Products table
-        function renderProducts() {
-            const tableBody = document.getElementById('productsTable').querySelector('tbody');
-            tableBody.innerHTML = '';
-            let productsForSaleCount = 0;
-            simulatedDB.products.forEach(product => {
-                const row = tableBody.insertRow();
+        function renderProducts(products) {
+            productsTableBody.innerHTML = '';
+            if (products.length === 0) {
+                productsTableBody.innerHTML = '<tr><td colspan="6" class="text-center py-4 text-gray-500">Товарів не знайдено.</td></tr>';
+                return;
+            }
+            products.forEach(product => {
+                const row = productsTableBody.insertRow();
                 row.insertCell().textContent = product.id;
                 row.insertCell().textContent = product.product_name;
                 row.insertCell().textContent = `${product.price} ${product.currency}`;
@@ -460,7 +557,6 @@
                 switch (product.status) {
                     case 'approved':
                         statusBadgeClass = 'badge-success';
-                        productsForSaleCount++;
                         break;
                     case 'pending_review':
                         statusBadgeClass = 'badge-warning';
@@ -498,16 +594,17 @@
                     actionsCell.appendChild(approveBtn);
                 }
             });
-            document.getElementById('productsForSale').textContent = productsForSaleCount;
         }
 
         // Function to render Transactions table
-        function renderTransactions() {
-            const tableBody = document.getElementById('transactionsTable').querySelector('tbody');
-            tableBody.innerHTML = '';
-            let completedTransactionsCount = 0;
-            simulatedDB.transactions.forEach(transaction => {
-                const row = tableBody.insertRow();
+        function renderTransactions(transactions) {
+            transactionsTableBody.innerHTML = '';
+            if (transactions.length === 0) {
+                transactionsTableBody.innerHTML = '<tr><td colspan="6" class="text-center py-4 text-gray-500">Транзакцій не знайдено.</td></tr>';
+                return;
+            }
+            transactions.forEach(transaction => {
+                const row = transactionsTableBody.insertRow();
                 row.insertCell().textContent = transaction.id;
                 row.insertCell().textContent = transaction.product_id;
                 row.insertCell().textContent = transaction.seller_id;
@@ -517,7 +614,6 @@
                 switch (transaction.status) {
                     case 'completed':
                         statusBadgeClass = 'badge-success';
-                        completedTransactionsCount++;
                         break;
                     case 'cancelled':
                         statusBadgeClass = 'badge-danger';
@@ -528,15 +624,17 @@
                 statusCell.innerHTML = `<span class="badge ${statusBadgeClass}">${transaction.status.replace('_', ' ')}</span>`;
                 row.insertCell().textContent = formatDate(transaction.created_at);
             });
-            document.getElementById('completedTransactions').textContent = completedTransactionsCount;
         }
 
         // Function to render Reviews table
-        function renderReviews() {
-            const tableBody = document.getElementById('reviewsTable').querySelector('tbody');
-            tableBody.innerHTML = '';
-            simulatedDB.reviews.forEach(review => {
-                const row = tableBody.insertRow();
+        function renderReviews(reviews) {
+            reviewsTableBody.innerHTML = '';
+            if (reviews.length === 0) {
+                reviewsTableBody.innerHTML = '<tr><td colspan="6" class="text-center py-4 text-gray-500">Відгуків не знайдено.</td></tr>';
+                return;
+            }
+            reviews.forEach(review => {
+                const row = reviewsTableBody.insertRow();
                 row.insertCell().textContent = review.id;
                 row.insertCell().textContent = review.transaction_id;
                 row.insertCell().textContent = '⭐'.repeat(review.rating);
@@ -564,9 +662,15 @@
             newsModal.classList.add('hidden');
         });
 
-        function openNewsModalForEdit(newsId) {
-            const news = simulatedDB.news.find(n => n.id === newsId);
-            if (news) {
+        async function openNewsModalForEdit(newsId) {
+            const apiKey = API_KEY_INPUT.value;
+            if (!apiKey) { showAlert("Будь ласка, введіть ADMIN_API_KEY."); return; }
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/admin/news/${newsId}`, { headers: { 'X-API-Key': apiKey } });
+                if (!response.ok) throw new Error(`Помилка завантаження новини: ${response.status}`);
+                const news = await response.json();
+
                 newsModalTitle.textContent = `Редагувати новину #${newsId}`;
                 document.getElementById('newsTitle').value = news.title;
                 document.getElementById('newsContent').value = news.content;
@@ -575,72 +679,106 @@
                 document.getElementById('newsLang').value = news.lang;
                 currentEditNewsId = newsId;
                 newsModal.classList.remove('hidden');
-            } else {
-                showAlert('Новину не знайдено.');
+            } catch (error) {
+                console.error("Помилка при відкритті модального вікна новини:", error);
+                showAlert(`Помилка: ${error.message}`);
             }
         }
 
-        newsForm.addEventListener('submit', (e) => {
+        newsForm.addEventListener('submit', async (e) => {
             e.preventDefault();
+            const apiKey = API_KEY_INPUT.value;
+            if (!apiKey) { showAlert("Будь ласка, введіть ADMIN_API_KEY."); return; }
+
             const title = document.getElementById('newsTitle').value;
             const content = document.getElementById('newsContent').value;
             const source_url = document.getElementById('newsUrl').value;
             const image_url = document.getElementById('newsImageUrl').value;
             const lang = document.getElementById('newsLang').value;
 
+            const newsData = { title, content, source_url, image_url, lang, status: 'pending_review' };
+            let url = `${API_BASE_URL}/admin/news`;
+            let method = 'POST';
+
             if (currentEditNewsId) {
-                // Edit existing news
-                const newsIndex = simulatedDB.news.findIndex(n => n.id === currentEditNewsId);
-                if (newsIndex !== -1) {
-                    simulatedDB.news[newsIndex] = {
-                        ...simulatedDB.news[newsIndex],
-                        title,
-                        content,
-                        source_url,
-                        image_url,
-                        lang,
-                        status: 'pending_review' // Set to pending review after edit
-                    };
-                    showAlert(`Новину #${currentEditNewsId} оновлено та відправлено на перевірку.`);
-                }
-            } else {
-                // Add new news
-                const newId = Math.max(...simulatedDB.news.map(n => n.id)) + 1;
-                simulatedDB.news.push({
-                    id: newId,
-                    title,
-                    content,
-                    source_url,
-                    image_url,
-                    published_at: new Date().toISOString(),
-                    lang,
-                    status: 'pending_review'
-                });
-                showAlert(`Новину #${newId} додано та відправлено на перевірку.`);
+                url = `${API_BASE_URL}/admin/news/${currentEditNewsId}`;
+                method = 'PUT';
             }
-            newsModal.classList.add('hidden');
-            renderNews(); // Re-render table
-            // In a real app, you'd send this data to your backend
+
+            try {
+                const response = await fetch(url, {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-API-Key': apiKey
+                    },
+                    body: JSON.stringify(newsData)
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.detail || `Помилка: ${response.status}`);
+                }
+
+                if (currentEditNewsId) {
+                    showAlert(`Новину #${currentEditNewsId} оновлено та відправлено на перевірку.`);
+                } else {
+                    const newNews = await response.json(); // Assuming API returns the new news item
+                    showAlert(`Новину #${newNews.id} додано та відправлено на перевірку.`);
+                }
+                newsModal.classList.add('hidden');
+                await fetchAllData(); // Re-fetch all data to update tables
+            } catch (error) {
+                console.error("Помилка при збереженні новини:", error);
+                showAlert(`Помилка: ${error.message}`);
+            }
         });
 
         function confirmDeleteNews(newsId) {
             showAlert(`Ви впевнені, що хочете видалити новину #${newsId}?`, () => deleteNews(newsId), true);
         }
 
-        function deleteNews(newsId) {
-            simulatedDB.news = simulatedDB.news.filter(n => n.id !== newsId);
-            showAlert(`Новину #${newsId} видалено.`);
-            renderNews();
-            // In a real app, you'd send a delete request to your backend
+        async function deleteNews(newsId) {
+            const apiKey = API_KEY_INPUT.value;
+            if (!apiKey) { showAlert("Будь ласка, введіть ADMIN_API_KEY."); return; }
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/admin/news/${newsId}`, {
+                    method: 'DELETE',
+                    headers: { 'X-API-Key': apiKey }
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.detail || `Помилка: ${response.status}`);
+                }
+                showAlert(`Новину #${newsId} видалено.`);
+                await fetchAllData();
+            } catch (error) {
+                console.error("Помилка при видаленні новини:", error);
+                showAlert(`Помилка: ${error.message}`);
+            }
         }
 
-        function approveNews(newsId) {
-            const newsIndex = simulatedDB.news.findIndex(n => n.id === newsId);
-            if (newsIndex !== -1) {
-                simulatedDB.news[newsIndex].status = 'approved';
+        async function approveNews(newsId) {
+            const apiKey = API_KEY_INPUT.value;
+            if (!apiKey) { showAlert("Будь ласка, введіть ADMIN_API_KEY."); return; }
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/admin/news/${newsId}/approve`, {
+                    method: 'POST',
+                    headers: { 'X-API-Key': apiKey }
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.detail || `Помилка: ${response.status}`);
+                }
                 showAlert(`Новину #${newsId} схвалено.`);
-                renderNews();
-                // In a real app, you'd send an update request to your backend
+                await fetchAllData();
+            } catch (error) {
+                console.error("Помилка при схваленні новини:", error);
+                showAlert(`Помилка: ${error.message}`);
             }
         }
 
@@ -662,9 +800,15 @@
             productModal.classList.add('hidden');
         });
 
-        function openProductModalForEdit(productId) {
-            const product = simulatedDB.products.find(p => p.id === productId);
-            if (product) {
+        async function openProductModalForEdit(productId) {
+            const apiKey = API_KEY_INPUT.value;
+            if (!apiKey) { showAlert("Будь ласка, введіть ADMIN_API_KEY."); return; }
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/admin/products/${productId}`, { headers: { 'X-API-Key': apiKey } });
+                if (!response.ok) throw new Error(`Помилка завантаження товару: ${response.status}`);
+                const product = await response.json();
+
                 productModalTitle.textContent = `Редагувати товар #${productId}`;
                 document.getElementById('productName').value = product.product_name;
                 document.getElementById('productDescription').value = product.description;
@@ -674,13 +818,17 @@
                 document.getElementById('productEPoint').value = product.e_point_location_text;
                 currentEditProductId = productId;
                 productModal.classList.remove('hidden');
-            } else {
-                showAlert('Товар не знайдено.');
+            } catch (error) {
+                console.error("Помилка при відкритті модального вікна товару:", error);
+                showAlert(`Помилка: ${error.message}`);
             }
         }
 
-        productForm.addEventListener('submit', (e) => {
+        productForm.addEventListener('submit', async (e) => {
             e.preventDefault();
+            const apiKey = API_KEY_INPUT.value;
+            if (!apiKey) { showAlert("Будь ласка, введіть ADMIN_API_KEY."); return; }
+
             const product_name = document.getElementById('productName').value;
             const description = document.getElementById('productDescription').value;
             const price = parseFloat(document.getElementById('productPrice').value);
@@ -693,63 +841,89 @@
                 return;
             }
 
+            const productData = { product_name, description, price, currency, image_url, e_point_location_text, status: 'pending_review' };
+            let url = `${API_BASE_URL}/admin/products`;
+            let method = 'POST';
+
             if (currentEditProductId) {
-                // Edit existing product
-                const productIndex = simulatedDB.products.findIndex(p => p.id === currentEditProductId);
-                if (productIndex !== -1) {
-                    simulatedDB.products[productIndex] = {
-                        ...simulatedDB.products[productIndex],
-                        product_name,
-                        description,
-                        price,
-                        currency,
-                        image_url,
-                        e_point_location_text,
-                        status: 'pending_review' // Set to pending review after edit
-                    };
-                    showAlert(`Товар #${currentEditProductId} оновлено та відправлено на перевірку.`);
-                }
-            } else {
-                // Add new product
-                const newId = Math.max(...simulatedDB.products.map(p => p.id)) + 1;
-                // Assign a random existing user as seller for simulation
-                const randomUser = simulatedDB.users[Math.floor(Math.random() * simulatedDB.users.length)];
-                simulatedDB.products.push({
-                    id: newId,
-                    user_id: randomUser.id, // Assign a random user as seller
-                    product_name,
-                    description,
-                    price,
-                    currency,
-                    image_url,
-                    e_point_location_text,
-                    status: 'pending_review'
-                });
-                showAlert(`Товар #${newId} додано та відправлено на перевірку.`);
+                url = `${API_BASE_URL}/admin/products/${currentEditProductId}`;
+                method = 'PUT';
             }
-            productModal.classList.add('hidden');
-            renderProducts(); // Re-render table
-            // In a real app, you'd send this data to your backend
+
+            try {
+                const response = await fetch(url, {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-API-Key': apiKey
+                    },
+                    body: JSON.stringify(productData)
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.detail || `Помилка: ${response.status}`);
+                }
+
+                if (currentEditProductId) {
+                    showAlert(`Товар #${currentEditProductId} оновлено та відправлено на перевірку.`);
+                } else {
+                    const newProduct = await response.json(); // Assuming API returns the new product
+                    showAlert(`Товар #${newProduct.id} додано та відправлено на перевірку.`);
+                }
+                productModal.classList.add('hidden');
+                await fetchAllData();
+            } catch (error) {
+                console.error("Помилка при збереженні товару:", error);
+                showAlert(`Помилка: ${error.message}`);
+            }
         });
 
         function confirmDeleteProduct(productId) {
             showAlert(`Ви впевнені, що хочете видалити товар #${productId}?`, () => deleteProduct(productId), true);
         }
 
-        function deleteProduct(productId) {
-            simulatedDB.products = simulatedDB.products.filter(p => p.id !== productId);
-            showAlert(`Товар #${productId} видалено.`);
-            renderProducts();
-            // In a real app, you'd send a delete request to your backend
+        async function deleteProduct(productId) {
+            const apiKey = API_KEY_INPUT.value;
+            if (!apiKey) { showAlert("Будь ласка, введіть ADMIN_API_KEY."); return; }
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/admin/products/${productId}`, {
+                    method: 'DELETE',
+                    headers: { 'X-API-Key': apiKey }
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.detail || `Помилка: ${response.status}`);
+                }
+                showAlert(`Товар #${productId} видалено.`);
+                await fetchAllData();
+            } catch (error) {
+                console.error("Помилка при видаленні товару:", error);
+                showAlert(`Помилка: ${error.message}`);
+            }
         }
 
-        function approveProduct(productId) {
-            const productIndex = simulatedDB.products.findIndex(p => p.id === productId);
-            if (productIndex !== -1) {
-                simulatedDB.products[productIndex].status = 'approved';
+        async function approveProduct(productId) {
+            const apiKey = API_KEY_INPUT.value;
+            if (!apiKey) { showAlert("Будь ласка, введіть ADMIN_API_KEY."); return; }
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/admin/products/${productId}/approve`, {
+                    method: 'POST',
+                    headers: { 'X-API-Key': apiKey }
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.detail || `Помилка: ${response.status}`);
+                }
                 showAlert(`Товар #${productId} схвалено.`);
-                renderProducts();
-                // In a real app, you'd send an update request to your backend
+                await fetchAllData();
+            } catch (error) {
+                console.error("Помилка при схваленні товару:", error);
+                showAlert(`Помилка: ${error.message}`);
             }
         }
 
@@ -761,12 +935,17 @@
         // Function to show a custom alert/confirmation
         function showAlert(message, onConfirm = null, isConfirm = false) {
             alertMessage.textContent = message;
+            // Remove existing confirm/cancel buttons if present
+            const existingCancelBtn = alertModal.querySelector('.btn-secondary');
+            if (existingCancelBtn) {
+                existingCancelBtn.remove();
+            }
             closeAlertBtn.textContent = isConfirm ? 'Підтвердити' : 'ОК';
 
-            // Clear previous event listeners to prevent multiple calls
+            // Clone to remove old event listeners
             const newCloseAlertBtn = closeAlertBtn.cloneNode(true);
             closeAlertBtn.parentNode.replaceChild(newCloseAlertBtn, closeAlertBtn);
-            
+
             newCloseAlertBtn.addEventListener('click', () => {
                 alertModal.classList.add('hidden');
                 if (onConfirm && isConfirm) {
@@ -786,14 +965,9 @@
             alertModal.classList.remove('hidden');
         }
 
-
-        // Initial rendering on page load
+        // Initial rendering on page load - no data loaded until API key is entered
         document.addEventListener('DOMContentLoaded', () => {
-            renderUsers();
-            renderNews();
-            renderProducts();
-            renderTransactions();
-            renderReviews();
+            // No initial fetch, user must enter API key and click load button
         });
     </script>
 </body>

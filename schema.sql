@@ -135,7 +135,7 @@ CREATE TABLE IF NOT EXISTS reports (
     user_id INT REFERENCES users(id),
     news_id INT REFERENCES news(id),
     reason TEXT,
-    created_at TIMESTAMP DEFAULT CURRENT_AT
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP -- Corrected from CURRENT_AT
 );
 
 -- Додавання/оновлення таблиці feedback

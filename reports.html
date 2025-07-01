@@ -61,6 +61,34 @@
         .badge-danger { background-color: #ef4444; } /* Red 500 */
         .badge-info { background-color: #3b82f6; } /* Blue 500 */
         .badge-neutral { background-color: #6b7280; } /* Gray 500 */
+        .btn {
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        .btn-primary {
+            background-color: #4f46e5; /* Indigo 600 */
+            color: #fff;
+        }
+        .btn-primary:hover {
+            background-color: #4338ca; /* Indigo 700 */
+        }
+        .input-field {
+            padding: 0.6rem 1rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.5rem;
+            width: 100%;
+        }
+        .error-message {
+            color: #ef4444; /* Red color for errors */
+            margin-top: 0.5rem;
+        }
 
         /* Responsive adjustments */
         @media (max-width: 768px) {
@@ -82,6 +110,19 @@
         <h1 class="text-4xl font-bold text-center text-indigo-700 mb-8 rounded-lg p-4 bg-white shadow-lg">
             Звіти по Діяльності Бота
         </h1>
+
+        <div class="mb-6 bg-blue-50 p-4 rounded-lg shadow-inner">
+            <p class="text-sm text-blue-800 mb-2">Для доступу до даних, будь ласка, введіть ваш <b>ADMIN_API_KEY</b>. Цей ключ має бути встановлений у змінних середовища вашого бота.</p>
+            <div class="flex flex-col sm:flex-row items-stretch sm:items-center space-y-3 sm:space-y-0 sm:space-x-3">
+                <input type="password" id="apiKeyInput" placeholder="Введіть ADMIN_API_KEY" class="input-field flex-grow">
+                <button id="loadReportsBtn" class="btn btn-primary w-full sm:w-auto">Завантажити звіти</button>
+            </div>
+            <p id="errorMessage" class="error-message hidden"></p>
+        </div>
+
+        <div id="loadingMessage" class="text-center text-gray-600 mb-4 hidden">
+            Завантаження звітів...
+        </div>
 
         <!-- General Statistics -->
         <div class="card">
@@ -119,6 +160,7 @@
             <h2 class="text-2xl font-semibold text-gray-700 mb-4">Статус Новин</h2>
             <div id="newsStatusChart" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 text-center">
                 <!-- News status counts will be rendered here -->
+                <div class="p-4 bg-gray-200 rounded-lg shadow-sm text-gray-700">Завантажте дані, використовуючи ключ доступу.</div>
             </div>
         </div>
 
@@ -127,6 +169,7 @@
             <h2 class="text-2xl font-semibold text-gray-700 mb-4">Статус Товарів</h2>
             <div id="productStatusChart" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 text-center">
                 <!-- Product status counts will be rendered here -->
+                <div class="p-4 bg-gray-200 rounded-lg shadow-sm text-gray-700">Завантажте дані, використовуючи ключ доступу.</div>
             </div>
         </div>
 
@@ -145,6 +188,7 @@
                     </thead>
                     <tbody>
                         <!-- Active user data will be inserted here -->
+                        <tr><td colspan="4" class="text-center py-4 text-gray-500">Завантажте дані, використовуючи ключ доступу.</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -165,6 +209,7 @@
                     </thead>
                     <tbody>
                         <!-- Top sellers data will be inserted here -->
+                        <tr><td colspan="4" class="text-center py-4 text-gray-500">Завантажте дані, використовуючи ключ доступу.</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -185,6 +230,7 @@
                     </thead>
                     <tbody>
                         <!-- Top buyers data will be inserted here -->
+                        <tr><td colspan="4" class="text-center py-4 text-gray-500">Завантажте дані, використовуючи ключ доступу.</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -193,65 +239,113 @@
     </div>
 
     <script>
-        // Simulated Report Data (replace with actual API calls in a real application)
-        const simulatedReportsData = {
-            general_stats: {
-                total_users: 150,
-                total_news: 320,
-                total_products: 85,
-                total_transactions: 120,
-                total_reviews: 75
-            },
-            active_users_last_7_days: [
-                { id: 123456789, username: 'john_doe', first_name: 'Джон', last_active: '2025-06-30T10:00:00Z' },
-                { id: 987654321, username: 'jane_smith', first_name: 'Джейн', last_active: '2025-06-29T15:30:00Z' },
-                { id: 112233445, username: 'bot_user_1', first_name: 'Бот', last_active: '2025-06-30T08:15:00Z' },
-                { id: 554433221, username: null, first_name: 'Анна', last_active: '2025-06-28T20:00:00Z' },
-                { id: 123123123, username: 'user_active_5', first_name: 'Петро', last_active: '2025-06-27T11:00:00Z' },
-                { id: 321321321, username: 'user_active_6', first_name: 'Олена', last_active: '2025-06-26T18:00:00Z' },
-            ],
-            active_users_count: 6,
-            product_status_counts: {
-                'approved': 50,
-                'pending_review': 20,
-                'sold': 10,
-                'declined': 5
-            },
-            news_status_counts: {
-                'approved': 250,
-                'pending_review': 50,
-                'declined': 20
-            },
-            top_sellers: [
-                { id: 987654321, username: 'jane_smith', first_name: 'Джейн', sold_products_count: 15 },
-                { id: 123456789, username: 'john_doe', first_name: 'Джон', sold_products_count: 10 },
-                { id: 112233445, username: 'bot_user_1', first_name: 'Бот', sold_products_count: 7 },
-                { id: 554433221, username: null, first_name: 'Анна', sold_products_count: 5 },
-                { id: 123123123, username: 'user_active_5', first_name: 'Петро', sold_products_count: 3 },
-            ],
-            top_buyers: [
-                { id: 112233445, username: 'bot_user_1', first_name: 'Бот', completed_purchases_count: 8 },
-                { id: 123456789, username: 'john_doe', first_name: 'Джон', completed_purchases_count: 6 },
-                { id: 987654321, username: 'jane_smith', first_name: 'Джейн', completed_purchases_count: 4 },
-                { id: 321321321, username: 'user_active_6', first_name: 'Олена', completed_purchases_count: 3 },
-                { id: 554433221, username: null, first_name: 'Анна', completed_purchases_count: 2 },
-            ]
-        };
+        // Dynamically determine the base URL for API requests.
+        const API_BASE_URL = window.location.origin;
+        const API_KEY_INPUT = document.getElementById('apiKeyInput');
+        const LOAD_REPORTS_BTN = document.getElementById('loadReportsBtn');
+        const ERROR_MESSAGE = document.getElementById('errorMessage');
+        const LOADING_MESSAGE = document.getElementById('loadingMessage');
+
+        // Elements for general stats
+        const statTotalUsers = document.getElementById('statTotalUsers');
+        const statTotalNews = document.getElementById('statTotalNews');
+        const statTotalProducts = document.getElementById('statTotalProducts');
+        const statTotalTransactions = document.getElementById('statTotalTransactions');
+        const statTotalReviews = document.getElementById('statTotalReviews');
+        const statActiveUsersCount = document.getElementById('statActiveUsersCount');
+
+        // Table bodies
+        const activeUsersTableBody = document.getElementById('activeUsersTable').querySelector('tbody');
+        const topSellersTableBody = document.getElementById('topSellersTable').querySelector('tbody');
+        const topBuyersTableBody = document.getElementById('topBuyersTable').querySelector('tbody');
+
+        LOAD_REPORTS_BTN.addEventListener('click', fetchReportsData);
+
+        /**
+         * Fetches all reports data from the API.
+         */
+        async function fetchReportsData() {
+            const apiKey = API_KEY_INPUT.value;
+            if (!apiKey) {
+                ERROR_MESSAGE.textContent = "Будь ласка, введіть ADMIN_API_KEY.";
+                ERROR_MESSAGE.classList.remove('hidden');
+                return;
+            } else {
+                ERROR_MESSAGE.classList.add('hidden');
+            }
+
+            LOADING_MESSAGE.classList.remove('hidden');
+            // Clear all elements/tables
+            statTotalUsers.textContent = '0';
+            statTotalNews.textContent = '0';
+            statTotalProducts.textContent = '0';
+            statTotalTransactions.textContent = '0';
+            statTotalReviews.textContent = '0';
+            statActiveUsersCount.textContent = '0';
+            document.getElementById('newsStatusChart').innerHTML = '<div class="p-4 bg-gray-200 rounded-lg shadow-sm text-gray-700">Завантаження...</div>';
+            document.getElementById('productStatusChart').innerHTML = '<div class="p-4 bg-gray-200 rounded-lg shadow-sm text-gray-700">Завантаження...</div>';
+            activeUsersTableBody.innerHTML = '<tr><td colspan="4" class="text-center py-4 text-gray-500">Завантаження...</td></tr>';
+            topSellersTableBody.innerHTML = '<tr><td colspan="4" class="text-center py-4 text-gray-500">Завантаження...</td></tr>';
+            topBuyersTableBody.innerHTML = '<tr><td colspan="4" class="text-center py-4 text-gray-500">Завантаження...</td></tr>';
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/admin/reports`, {
+                    headers: { 'X-API-Key': apiKey }
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.detail || `Помилка: ${response.status}`);
+                }
+
+                const data = await response.json();
+                renderGeneralStats(data.general_stats);
+                renderStatusChart('newsStatusChart', data.news_status_counts);
+                renderStatusChart('productStatusChart', data.product_status_counts);
+                renderActiveUsersTable(data.active_users_last_7_days);
+                renderTopSellersTable(data.top_sellers);
+                renderTopBuyersTable(data.top_buyers);
+
+            } catch (error) {
+                console.error("Помилка завантаження звітів:", error);
+                ERROR_MESSAGE.textContent = `Помилка: ${error.message}`;
+                ERROR_MESSAGE.classList.remove('hidden');
+                // Display error state for tables
+                statTotalUsers.textContent = 'N/A';
+                statTotalNews.textContent = 'N/A';
+                statTotalProducts.textContent = 'N/A';
+                statTotalTransactions.textContent = 'N/A';
+                statTotalReviews.textContent = 'N/A';
+                statActiveUsersCount.textContent = 'N/A';
+                document.getElementById('newsStatusChart').innerHTML = '<div class="p-4 bg-red-100 rounded-lg shadow-sm text-red-700">Помилка завантаження.</div>';
+                document.getElementById('productStatusChart').innerHTML = '<div class="p-4 bg-red-100 rounded-lg shadow-sm text-red-700">Помилка завантаження.</div>';
+                activeUsersTableBody.innerHTML = '<tr><td colspan="4" class="text-center py-4 text-red-500">Не вдалося завантажити дані.</td></tr>';
+                topSellersTableBody.innerHTML = '<tr><td colspan="4" class="text-center py-4 text-red-500">Не вдалося завантажити дані.</td></tr>';
+                topBuyersTableBody.innerHTML = '<tr><td colspan="4" class="text-center py-4 text-red-500">Не вдалося завантажити дані.</td></tr>';
+            } finally {
+                LOADING_MESSAGE.classList.add('hidden');
+            }
+        }
 
         // Helper function to format date
         function formatDate(dateString) {
-            const options = { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' };
-            return new Date(dateString).toLocaleDateString('uk-UA', options);
+            if (!dateString) return 'N/A';
+            try {
+                const options = { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' };
+                return new Date(dateString).toLocaleDateString('uk-UA', options);
+            } catch (e) {
+                return 'Некоректна дата';
+            }
         }
 
         // Render General Stats
         function renderGeneralStats(data) {
-            document.getElementById('statTotalUsers').textContent = data.total_users;
-            document.getElementById('statTotalNews').textContent = data.total_news;
-            document.getElementById('statTotalProducts').textContent = data.total_products;
-            document.getElementById('statTotalTransactions').textContent = data.total_transactions;
-            document.getElementById('statTotalReviews').textContent = data.total_reviews;
-            document.getElementById('statActiveUsersCount').textContent = simulatedReportsData.active_users_count;
+            statTotalUsers.textContent = data.total_users || 0;
+            statTotalNews.textContent = data.total_news || 0;
+            statTotalProducts.textContent = data.total_products || 0;
+            statTotalTransactions.textContent = data.total_transactions || 0;
+            statTotalReviews.textContent = data.total_reviews || 0;
+            statActiveUsersCount.textContent = data.active_users_count || 0;
         }
 
         // Render Status Charts (simplified as divs with badges)
@@ -270,6 +364,11 @@
                 'cancelled': 'bg-gray-500'
             };
 
+            if (Object.keys(statusCounts).length === 0) {
+                container.innerHTML = '<div class="p-4 bg-gray-200 rounded-lg shadow-sm text-gray-700">Дані про статус відсутні.</div>';
+                return;
+            }
+
             for (const status in statusCounts) {
                 const count = statusCounts[status];
                 const div = document.createElement('div');
@@ -284,10 +383,13 @@
 
         // Render Active Users Table
         function renderActiveUsersTable(users) {
-            const tableBody = document.getElementById('activeUsersTable').querySelector('tbody');
-            tableBody.innerHTML = '';
+            activeUsersTableBody.innerHTML = '';
+            if (users.length === 0) {
+                activeUsersTableBody.innerHTML = '<tr><td colspan="4" class="text-center py-4 text-gray-500">Активних користувачів не знайдено.</td></tr>';
+                return;
+            }
             users.forEach(user => {
-                const row = tableBody.insertRow();
+                const row = activeUsersTableBody.insertRow();
                 row.insertCell().textContent = user.id;
                 row.insertCell().textContent = user.username || 'N/A';
                 row.insertCell().textContent = user.first_name || 'N/A';
@@ -297,10 +399,13 @@
 
         // Render Top Sellers Table
         function renderTopSellersTable(sellers) {
-            const tableBody = document.getElementById('topSellersTable').querySelector('tbody');
-            tableBody.innerHTML = '';
+            topSellersTableBody.innerHTML = '';
+            if (sellers.length === 0) {
+                topSellersTableBody.innerHTML = '<tr><td colspan="4" class="text-center py-4 text-gray-500">Топ продавців не знайдено.</td></tr>';
+                return;
+            }
             sellers.forEach((seller, index) => {
-                const row = tableBody.insertRow();
+                const row = topSellersTableBody.insertRow();
                 row.insertCell().textContent = index + 1;
                 row.insertCell().textContent = seller.id;
                 row.insertCell().textContent = seller.username || seller.first_name || 'N/A';
@@ -310,10 +415,13 @@
 
         // Render Top Buyers Table
         function renderTopBuyersTable(buyers) {
-            const tableBody = document.getElementById('topBuyersTable').querySelector('tbody');
-            tableBody.innerHTML = '';
+            topBuyersTableBody.innerHTML = '';
+            if (buyers.length === 0) {
+                topBuyersTableBody.innerHTML = '<tr><td colspan="4" class="text-center py-4 text-gray-500">Топ покупців не знайдено.</td></tr>';
+                return;
+            }
             buyers.forEach((buyer, index) => {
-                const row = tableBody.insertRow();
+                const row = topBuyersTableBody.insertRow();
                 row.insertCell().textContent = index + 1;
                 row.insertCell().textContent = buyer.id;
                 row.insertCell().textContent = buyer.username || buyer.first_name || 'N/A';
@@ -321,14 +429,9 @@
             });
         }
 
-        // Initialize reports on page load
+        // Initial state - no data loaded until API key is entered
         document.addEventListener('DOMContentLoaded', () => {
-            renderGeneralStats(simulatedReportsData.general_stats);
-            renderStatusChart('newsStatusChart', simulatedReportsData.news_status_counts);
-            renderStatusChart('productStatusChart', simulatedReportsData.product_status_counts);
-            renderActiveUsersTable(simulatedReportsData.active_users_last_7_days);
-            renderTopSellersTable(simulatedReportsData.top_sellers);
-            renderTopBuyersTable(simulatedReportsData.top_buyers);
+            // No initial fetch, user must enter API key and click load button
         });
     </script>
 </body>
