@@ -2,6 +2,6 @@ aiogram==3.9.0
 fastapi==0.111.0
 uvicorn[standard]==0.29.0
 python-dotenv==1.0.1
-asyncpg==0.29.0  # Оновлено до 0.29.0 для кращої сумісності з Python 3.13
+psycopg[binary]==3.1.19  # Замінено asyncpg на psycopg[binary] для сумісності з Python 3.13
 aiohttp==3.9.5
 croniter==2.0.7

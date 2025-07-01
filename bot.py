@@ -17,7 +17,9 @@ from aiogram.utils.markdown import hbold, hlink
 
 from aiohttp import ClientSession
 from gtts import gTTS # Для генерації аудіо
-import asyncpg # Для роботи з PostgreSQL
+import psycopg
+from psycopg.rows import dict_row # Для отримання результатів як словників
+
 
 # --- Конфігурація та ініціалізація (початок) ---
 # Заміни ці значення на свої
@@ -36,14 +38,38 @@ dp = Dispatcher()
 router = Router()
 dp.include_router(router)
 
+
 # Пул підключень до БД
 db_pool = None
 
 async def get_db_pool():
     global db_pool
     if db_pool is None:
-        db_pool = await asyncpg.create_pool(DATABASE_URL)
+        try:
+            # Створення пулу підключень psycopg.AsyncConnectionPool
+            # min_size: мінімальна кількість з'єднань, які підтримуються в пулі
+            # max_size: максимальна кількість з'єднань, які можуть бути відкриті в пулі
+            # timeout: час очікування, якщо пул досяг максимального розміру
+            db_pool = psycopg.AsyncConnectionPool(
+                conninfo=DATABASE_URL,
+                min_size=1,  # Мінімальна кількість підключень у пулі
+                max_size=10, # Максимальна кількість підключень у пулі
+                open=psycopg.AsyncConnection.connect, # Функція для створення нового підключення
+                # row_factory=dict_row # Можна встановити тут, якщо всі курсори мають повертати dict_row
+            )
+            # Примітка: psycopg.AsyncConnectionPool не має прямого методу "connect" як asyncpg.create_pool.
+            # Він створює підключення за потребою.
+            # Для перевірки можна отримати одне з'єднання
+            async with db_pool.connection() as conn:
+                await conn.execute("SELECT 1")
+            print("Пул підключень до БД psycopg успішно ініціалізовано.")
+        except Exception as e:
+            print(f"Помилка ініціалізації пулу підключень до БД: {e}")
+            # Можливо, вам захочеться повторити спробу або вийти з програми
+            raise # Перевикидаємо виняток, щоб проблема була помітна
     return db_pool
+
+
 
 # --- Класи даних (dataclasses) ---
 class User:
@@ -264,13 +290,86 @@ async def create_tables():
 
         logger.info("Database tables checked/created successfully.")
 
+class User:
+    def __init__(self, **kwargs):
+        self.id = kwargs.get('id')
+        self.telegram_id = kwargs.get('telegram_id')
+        self.username = kwargs.get('username')
+        self.first_name = kwargs.get('first_name')
+        self.created_at = kwargs.get('created_at')
+        self.last_active = kwargs.get('last_active')
+        self.is_premium = kwargs.get('is_premium', False)
+        self.level = kwargs.get('level', 1)
+        self.email = kwargs.get('email')
+        self.is_admin = kwargs.get('is_admin', False)
+        # Переконайтеся, що всі поля з вашої таблиці 'users' тут присутні
+
+    def __repr__(self):
+        return f"<User id={self.id} username={self.username}>"
+
+
 async def get_user(user_id: int) -> Optional[User]:
-    conn = await get_db_pool()
-    async with conn.acquire() as connection:
-        user_record = await connection.fetchrow("SELECT * FROM users WHERE id = $1", user_id)
-        if user_record:
-            return User(**dict(user_record))
+    """
+    Отримує інформацію про користувача за його ID з бази даних.
+    Використовує пул підключень psycopg.
+
+    :param user_id: ID користувача.
+    :return: Об'єкт User, якщо користувача знайдено, інакше None.
+    """
+    pool = await get_db_pool() # Отримуємо пул підключень
+    if pool is None:
+        return None # Якщо пул не ініціалізовано, повертаємо None
+
+    try:
+        async with pool.connection() as conn: # Отримуємо підключення з пулу
+            async with conn.cursor(row_factory=dict_row) as cur: # Створюємо курсор, щоб отримувати результати як словники
+                # Використовуємо SELECT для отримання даних користувача
+                # Плейсхолдери в psycopg - це %s
+                await cur.execute("SELECT * FROM users WHERE id = %s", (user_id,))
+                user_record = await cur.fetchone() # Отримуємо один рядок
+
+                if user_record:
+                    # psycopg з dict_row повертає об'єкт, який поводиться як словник.
+                    # Його можна розпакувати в конструктор User.
+                    return User(**user_record)
+                return None
+    except Exception as e:
+        print(f"Помилка при отриманні користувача з БД: {e}")
         return None
+
+
+    async with pool.connection() as conn: # Отримуємо підключення з пулу
+        async with conn.cursor(row_factory=dict_row) as cur: # Створюємо курсор, щоб отримувати результати як словники
+            # Використовуємо SELECT для отримання даних користувача
+            # Плейсхолдери в psycopg - це %s
+            await cur.execute("SELECT * FROM users WHERE id = %s", (user_id,))
+            user_record = await cur.fetchone() # Отримуємо один рядок
+
+            if user_record:
+                # psycopg з dict_row повертає об'єкт, який поводиться як словник.
+                # Його можна розпакувати в конструктор User.
+                return User(**user_record)
+            return None
+
+# Приклад функції для оновлення, якщо це те, що ви мали на увазі спочатку:
+async def update_user_username(user_id: int, new_username: str) -> bool:
+    """
+    Оновлює ім'я користувача за його ID.
+
+    :param user_id: ID користувача.
+    :param new_username: Нове ім'я користувача.
+    :return: True, якщо оновлення успішне, інакше False.
+    """
+    pool = await get_db_pool()
+    if pool is None:
+        return False
+
+    async with pool.connection() as conn:
+        async with conn.cursor() as cur: # Для UPDATE не обов'язково dict_row
+            await cur.execute("UPDATE users SET username = %s WHERE id = %s", (new_username, user_id))
+            await conn.commit() # Важливо: для UPDATE, INSERT, DELETE потрібно явно робити commit
+            return cur.rowcount > 0 # Перевіряємо, чи був оновлений хоча б один рядок
+
 
 async def create_or_update_user(tg_user: Any) -> User:
     conn = await get_db_pool()
